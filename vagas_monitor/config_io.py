@@ -13,7 +13,7 @@ import yaml
 
 ORDEM = ["perfil", "intervalo_dias", "lookback_days", "first_run_lookback_days", "estado", "regiao", "alvo",
          "termos_busca", "categorias", "senioridade", "excluir_titulo", "habilidades", "fontes", "relatorio",
-         "notificacoes", "avaliacao"]
+         "notificacoes", "avaliacao", "modelo"]
 
 COMENTARIOS = {
     "perfil": "Seu resumo profissional, usado pela avaliação por IA (a variável PERFIL_MD tem precedência).",
@@ -33,6 +33,7 @@ COMENTARIOS = {
     "relatorio": "Relatórios e painel. url_publica vazio = sem link nas notificações.",
     "notificacoes": "Canais. auto = envia se as variáveis de ambiente existirem.",
     "avaliacao": "Avaliação por IA (opcional): nota de 0 a 10 e comentário por vaga.",
+    "modelo": "repositorio: dono/nome do repositório-modelo; o `doctor` avisa se há versão nova.",
 }
 
 CABECALHO = """# ============================================================

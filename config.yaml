@@ -120,3 +120,8 @@ avaliacao:
   anthropic:
     modelo: claude-opus-5
     esforco: low
+
+# Repositório do modelo de onde esta cópia veio (ex.: usuario/radar-de-vagas-laplace). O
+# `doctor` compara a sua versão com a última release e avisa quando uma fonte foi consertada.
+modelo:
+  repositorio: ""

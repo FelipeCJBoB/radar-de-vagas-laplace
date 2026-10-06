@@ -313,6 +313,14 @@ def cmd_calibrar(a) -> int:
     return 0 if m["ok"] else 1
 
 
+def cmd_doctor(a) -> int:
+    """Confere config, perfil, canais, IA, fontes e estado, e diz como corrigir cada problema."""
+    from . import diagnostico
+    itens, rc = diagnostico.executar(a.config, rede=not a.offline, ia=a.ia)
+    print("\n".join(diagnostico.formatar(itens)))
+    return rc
+
+
 def cmd_render(a) -> int:
     """Regera Markdown/HTML a partir do JSON de uma rodada (útil para ajustar o layout sem coletar)."""
     from . import report
@@ -378,6 +386,10 @@ def main(argv=None) -> int:
     cal.add_argument("--fontes", default="gupy", help="fontes da sondagem, separadas por vírgula (padrão: gupy)")
     cal.add_argument("--dias", type=int, default=30, help="janela da sondagem em dias (padrão: 30)")
     cal.set_defaults(fn=cmd_calibrar)
+    dr = sub.add_parser("doctor", help="diagnostica config, perfil, Telegram, e-mail, IA e fontes (e como corrigir)")
+    dr.add_argument("--offline", action="store_true", help="não faz chamadas de rede")
+    dr.add_argument("--ia", action="store_true", help="testa a chave de IA com uma chamada real")
+    dr.set_defaults(fn=cmd_doctor)
     rr = sub.add_parser("render", help="regera Markdown/HTML a partir do JSON da última rodada")
     rr.add_argument("json_path", nargs="?")
     rr.set_defaults(fn=cmd_render)
