@@ -22,7 +22,7 @@ from . import anonimizar as anon
 from . import areas, calibracao, curriculo
 from .config import ROOT, avaliacao_cfg, load_config
 from .config_io import escrever_config
-from .text import normalize
+from .text import any_term, normalize
 from .validar import normalizar_nivel, validar_config
 
 SENIORIDADE_PADRAO = {
@@ -115,6 +115,9 @@ def executar_init(e: dict, raiz: Path | None = None, proposta_fn=None) -> dict:
         if not selecao:
             raise InitErro("informe ao menos uma área (areas=['slug', ...]) ou um currículo. "
                            "Veja o catálogo com `python -m vagas_monitor init --listar-areas`.")
+    # a mesma área pode vir duas vezes (a IA repetiu o pack com papéis diferentes): vale a primeira
+    vistos: set[str] = set()
+    selecao = [(s, p) for s, p in selecao if not (s in vistos or vistos.add(s))]
     try:
         comp = areas.compor(selecao) if selecao else {"categorias": {}, "termos_busca": [], "excluir_titulo": [], "habilidades": []}
     except (KeyError, ValueError) as err:
@@ -127,7 +130,26 @@ def executar_init(e: dict, raiz: Path | None = None, proposta_fn=None) -> dict:
         categorias[_slug(ex["nome"])] = {"nome": ex["nome"], "prioridade": base_prio + i, "bonus": bonus,
                                          "titulo": ex["titulo"], "descricao": ex.get("descricao") or []}
     termos_final = list(dict.fromkeys(termos + comp["termos_busca"]))[:MAX_TERMOS_BUSCA]
-    habil_final = list(dict.fromkeys(habil + comp["habilidades"]))[:MAX_HABILIDADES]
+    # `habilidades` são as DA PESSOA. Com currículo, só as que ele sustenta: misturar as do mercado
+    # (as do pack) faria o monitor premiar competência que a pessoa não declarou (a IA real
+    # devolveu 'acls', 'mv' e 'tasy' num currículo que não os citava). Sem currículo (modo manual),
+    # as do pack servem de ponto de partida e o aviso abaixo manda editar.
+    habil_final = list(dict.fromkeys(habil if proposta else comp["habilidades"]))[:MAX_HABILIDADES]
+    if not proposta and habil_final:
+        avisos.append("habilidades: são as mais comuns do mercado nas áreas escolhidas, um ponto de partida. "
+                      "Troque pelas SUAS em config.yaml (cada acerto soma pontos).")
+
+    # Uma exclusão global não pode matar um termo da própria área escolhida. A IA propôs excluir
+    # 'técnico de enfermagem' de quem é técnica de enfermagem e quer ser enfermeira: a profissão
+    # atual é categoria PONTE, não homônimo. A calibração pegou (recall 50%); aqui nem chega a entrar.
+    titulos_das_categorias = [t for c in categorias.values() for t in (c.get("titulo") or [])]
+    excluir_final, descartadas = [], []
+    for termo in list(dict.fromkeys(excluir + comp["excluir_titulo"])):
+        conflito = any(any_term(normalize(t), [termo]) for t in titulos_das_categorias)
+        (descartadas if conflito else excluir_final).append(termo)
+    if descartadas:
+        avisos.append("a IA propôs excluir termos que são da própria área escolhida e eles foram ignorados: "
+                      + ", ".join(descartadas) + ". Se são o seu cargo atual, use o papel `ponte`, não exclusão.")
     betas = [areas.carregar(s)["nome"] for s, _ in selecao if areas.carregar(s).get("status") == "beta"]
     if betas:
         avisos.append("categorias em fase beta (geradas com IA, sem validação de quem trabalha na área): "
@@ -143,7 +165,7 @@ def executar_init(e: dict, raiz: Path | None = None, proposta_fn=None) -> dict:
     novo = dict(atual)
     novo.update(regiao=regiao, alvo={"nivel": nivel, "aceita_niveis": (atual.get("alvo") or {}).get("aceita_niveis", [])},
                 termos_busca=termos_final, categorias=categorias,
-                excluir_titulo=list(dict.fromkeys((atual.get("excluir_titulo") or []) + excluir + comp["excluir_titulo"])),
+                excluir_titulo=list(dict.fromkeys((atual.get("excluir_titulo") or []) + excluir_final)),
                 habilidades=habil_final)
     novo.setdefault("senioridade", SENIORIDADE_PADRAO)
     if not novo["senioridade"]:

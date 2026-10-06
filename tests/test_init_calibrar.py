@@ -307,3 +307,81 @@ def test_sondagem_ignora_nome_de_lugar_e_colapsa_pedaco_redundante():
     assert "atendente restaurante" in cand and "padeiro" in cand  # a função fica; nível e lugar saem
     assert "restaurante" not in cand and "atendente" not in cand  # pedaços redundantes do maior
     assert not any(w in g.split() for g in cand for w in ("joao", "pessoa", "pb", "cabedelo", "pleno"))
+
+
+class ProvPorModelo(ProvFalso):
+    """Registra o modelo de cada chamada; `principal` está sobrecarregado, o resto responde."""
+
+    def __init__(self, respostas, modelos_ruins=("principal",)):
+        super().__init__(respostas)
+        self.modelos, self.ruins = [], modelos_ruins
+
+    def avaliar(self, cliente, system, texto, cfg, schema=None, max_tokens=800):
+        modelo = (cfg.get("falso") or {}).get("modelo", "principal")
+        self.modelos.append(modelo)
+        if modelo in self.ruins:
+            raise RuntimeError("503 sobrecarregado")
+        return super().avaliar(cliente, system, texto, cfg, schema, max_tokens)
+
+    def classificar_erro(self, exc):
+        return str(exc), False
+
+
+def test_propor_usa_o_modelo_de_reserva_quando_o_principal_esta_fora(monkeypatch):
+    """O 503 do Gemini gratuito durou horas; o `init` não pode depender do modelo principal."""
+    from vagas_monitor import providers
+
+    prov = ProvPorModelo([json.dumps(_proposta())])
+    monkeypatch.setitem(providers.DISPONIVEIS, "falso", prov)
+    cfg = {"falso": {"modelos_reserva": ["leve"]}}
+    p = curriculo.propor("cv", "obj", cfg, prov=prov, dormir=lambda s: None)
+    assert p["nivel_sugerido"] == "pleno"
+    assert prov.modelos == ["principal"] * 4 + ["leve"]  # 1 + 3 tentativas no principal, depois a reserva
+
+
+def test_propor_erro_fatal_nao_tenta_reserva(monkeypatch):
+    from vagas_monitor import providers
+
+    class Fatal(ProvPorModelo):
+        def classificar_erro(self, exc):
+            return "chave inválida", True
+
+    prov = Fatal([])
+    monkeypatch.setitem(providers.DISPONIVEIS, "falso", prov)
+    with pytest.raises(RuntimeError, match="chave inválida"):
+        curriculo.propor("cv", "obj", {"falso": {"modelos_reserva": ["leve"]}}, prov=prov, dormir=lambda s: None)
+    assert prov.modelos == ["principal"]
+
+
+def test_exclusao_da_ia_que_mata_a_propria_area_e_ignorada_com_aviso(raiz, tmp_path):
+    """Caso real: a IA mandou excluir 'técnico de enfermagem' de quem é técnica e quer ser enfermeira."""
+    cv = tmp_path / "cv.txt"
+    cv.write_text("Técnica de Enfermagem.", encoding="utf-8")
+    prop = _proposta(areas=[{"slug": "saude", "papel": "alvo", "motivo": "objetivo"}], categorias_extras=[],
+                     excluir_titulo=["técnico de enfermagem", "cuidador de idosos", "fiscal de loja"])
+    r = assistente.executar_init({**BASE, "curriculo": str(cv), "aprovado": True}, raiz=raiz, proposta_fn=lambda *a: prop)
+    cfg = load_config(raiz / "config.yaml")
+    assert cfg["excluir_titulo"] == ["fiscal de loja"]  # os dois da própria área saíram
+    assert any("ponte" in a and "técnico de enfermagem" in a for a in r["avisos"])
+    assert calibracao.decide("Técnico de Enfermagem Plantonista", cfg)[0]  # a profissão atual continua entrando
+
+
+def test_com_curriculo_as_habilidades_sao_so_as_da_pessoa_e_no_manual_vem_as_do_pack(raiz, tmp_path):
+    cv = tmp_path / "cv.txt"
+    cv.write_text("Analista financeira.", encoding="utf-8")
+    prop = _proposta(habilidades=["excel", "conciliação"])
+    assistente.executar_init({**BASE, "curriculo": str(cv), "aprovado": True}, raiz=raiz, proposta_fn=lambda *a: prop)
+    assert load_config(raiz / "config.yaml")["habilidades"] == ["excel", "conciliação"]
+
+    r = assistente.executar_init({**BASE, "manual": True, "areas": ["saude"]}, raiz=raiz)
+    assert "tasy" in load_config(raiz / "config.yaml")["habilidades"]  # ponto de partida do pack
+    assert any("habilidades" in a and "SUAS" in a for a in r["avisos"])
+
+
+def test_area_repetida_vale_so_a_primeira_vez(raiz):
+    r = assistente.executar_init({**BASE, "manual": True, "areas": ["saude:alvo", "saude:ponte", "educacao:adjacente"]},
+                                 raiz=raiz)
+    cfg = load_config(raiz / "config.yaml")
+    assert list(cfg["categorias"]) == ["saude", "educacao"] and cfg["categorias"]["saude"]["bonus"] > 0
+    beta = next(a for a in r["avisos"] if "beta" in a)
+    assert beta.count("Saúde") == 1

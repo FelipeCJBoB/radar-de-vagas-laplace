@@ -110,7 +110,10 @@ def montar_system() -> str:
         "vizinho legítimo. Se uma área não existir no catálogo, use `categorias_extras`.\n"
         "3. Termos de título: expressões COMPLETAS e específicas ('analista financeiro'), nunca palavras soltas "
         "e ambíguas ('financeiro', 'fiscal', 'segurança').\n"
-        "4. `excluir_titulo`: homônimos que enganariam a busca ('fiscal de loja' para quem busca a área fiscal).\n"
+        "4. `excluir_titulo`: SOMENTE homônimos, isto é, a mesma palavra com função de OUTRA área ('fiscal de "
+        "loja' para quem busca a área fiscal). NUNCA use para o cargo atual da pessoa nem para um nível "
+        "diferente do desejado: o cargo que a experiência atual sustenta entra como área com papel `ponte`. "
+        "`habilidades`: só as que o currículo sustenta; não acrescente as do mercado.\n"
         "5. `nivel_sugerido`: o do OBJETIVO, se a pessoa disse; senão, o que o currículo sustenta.\n"
         "6. `perfil_md`: formato de perfil profissional (objetivo, formação, experiência, habilidades, registros, "
         "idiomas), sem nome, contato nem endereço.\n\n"
@@ -164,18 +167,25 @@ def propor(curriculo_anonimizado: str, objetivo: str, cfg_avaliacao: dict, nivel
         prov = DISPONIVEIS[nome]
     cliente = cliente or prov.criar_cliente(cfg_avaliacao)
     system, texto = montar_system(), montar_texto(curriculo_anonimizado, objetivo, nivel)
+    # Modelos de reserva, como na avaliação das vagas: o 503 do Gemini gratuito pode durar horas,
+    # e é justamente quem só tem IA gratuita que mais precisa do `init` funcionando.
+    chave = next((k for k, v in DISPONIVEIS.items() if v is prov), None)
+    reservas = list(((cfg_avaliacao.get(chave) or {}) if chave else {}).get("modelos_reserva") or [])
     ultimo = None
-    for tentativa in range(len(esperas) + 1):
-        try:
-            bruto = prov.avaliar(cliente, system, texto, cfg_avaliacao, schema=PROPOSTA_SCHEMA, max_tokens=6000)
-            return validar_proposta(json.loads(bruto))
-        except (json.JSONDecodeError, PropostaInvalida) as e:
-            ultimo = f"resposta inválida da IA: {e}"
-        except Exception as e:  # noqa: BLE001
-            motivo, fatal = prov.classificar_erro(e)
-            ultimo = f"{prov.NOME}: {motivo}"
-            if fatal:
-                break
-        if tentativa < len(esperas):
-            dormir(esperas[tentativa])
+    for modelo in [None] + reservas:
+        cfg = cfg_avaliacao if modelo is None else {
+            **cfg_avaliacao, chave: {**(cfg_avaliacao.get(chave) or {}), "modelo": modelo}}
+        for tentativa in range(len(esperas) + 1):
+            try:
+                bruto = prov.avaliar(cliente, system, texto, cfg, schema=PROPOSTA_SCHEMA, max_tokens=6000)
+                return validar_proposta(json.loads(bruto))
+            except (json.JSONDecodeError, PropostaInvalida) as e:
+                ultimo = f"resposta inválida da IA: {e}"
+            except Exception as e:  # noqa: BLE001
+                motivo, fatal = prov.classificar_erro(e)
+                ultimo = f"{prov.NOME}: {motivo}"
+                if fatal:
+                    raise RuntimeError(ultimo) from e
+            if tentativa < len(esperas):
+                dormir(esperas[tentativa])
     raise RuntimeError(ultimo or "falha ao obter a proposta da IA")
