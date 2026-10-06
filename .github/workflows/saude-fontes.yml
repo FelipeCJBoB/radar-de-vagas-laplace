@@ -1,0 +1,80 @@
+name: Saúde das fontes
+
+# Roda SÓ no repositório-modelo (onde existe a variável MONITOR_ATIVO=false). Testa, uma vez por
+# dia, se Gupy, LinkedIn, Indeed e IBGE ainda respondem no formato que o coletor espera. Quando
+# algo muda, abre uma issue "Fonte quebrada": é assim que quem copiou o modelo fica sabendo, e
+# é o que faltou quando a Gupy ficou dias com zero vagas sem ninguém notar.
+
+on:
+  schedule:
+    - cron: "0 10 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: saude-fontes
+  cancel-in-progress: false
+
+jobs:
+  fontes:
+    if: ${{ vars.MONITOR_ATIVO == 'false' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+          cache: pip
+          cache-dependency-path: requirements*.txt
+
+      - run: pip install -r requirements-dev.txt
+
+      - name: Testes de contrato ao vivo
+        id: testes
+        run: |
+          set +e
+          python -m pytest -m live -q -p no:cacheprovider 2>&1 | tee resultado.txt
+          echo "falhou=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Abrir ou atualizar a issue de fonte quebrada
+        if: steps.testes.outputs.falhou != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create fonte-quebrada --color B60205 --description "Uma fonte de vagas mudou" --force
+          {
+            echo "Os testes de contrato ao vivo falharam em $(date -u +%Y-%m-%d)."
+            echo
+            echo "Execução: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo
+            echo "Fim da saída:"
+            echo '```'
+            tail -n 60 resultado.txt
+            echo '```'
+            echo
+            echo "Como investigar: guia/09-solucao-de-problemas.md, seção \"Fonte com zero vagas\"."
+          } > corpo.md
+          existente=$(gh issue list --label fonte-quebrada --state open --json number --jq '.[0].number // empty')
+          if [ -n "$existente" ]; then
+            gh issue comment "$existente" --body-file corpo.md
+          else
+            gh issue create --title "Fonte quebrada: o contrato ao vivo falhou" --label fonte-quebrada --body-file corpo.md
+          fi
+
+      - name: Fechar a issue quando tudo voltar ao normal
+        if: steps.testes.outputs.falhou == '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for n in $(gh issue list --label fonte-quebrada --state open --json number --jq '.[].number'); do
+            gh issue close "$n" --comment "Os testes de contrato voltaram a passar em $(date -u +%Y-%m-%d)."
+          done
+
+      - name: Falhar o job se os testes falharam
+        if: steps.testes.outputs.falhou != '0'
+        run: exit 1

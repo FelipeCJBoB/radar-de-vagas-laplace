@@ -6,6 +6,10 @@ requires-python = ">=3.10"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Os testes `live` usam a internet e APIs de terceiros: ficam de fora do padrão e rodam no
+# workflow saude-fontes.yml, ou à mão com `python -m pytest -m live`.
+addopts = "-m 'not live'"
+markers = ["live: contrato ao vivo das fontes (usa a internet; fora do pytest padrão)"]
 
 [tool.ruff]
 line-length = 140
