@@ -1,6 +1,13 @@
 # Solução de problemas
 
-Procure o sintoma na tabela. Os cinco primeiros são os que mais aparecem.
+**Comece pelo diagnóstico**, que confere config, perfil, Telegram, e-mail, IA, fontes e estado e diz como
+corrigir cada coisa:
+
+```bash
+python -m vagas_monitor doctor
+```
+
+Depois, se precisar, procure o sintoma na tabela. Os cinco primeiros são os que mais aparecem.
 
 | Sintoma | Causa provável | O que fazer |
 |---|---|---|
@@ -13,7 +20,7 @@ Procure o sintoma na tabela. Os cinco primeiros são os que mais aparecem.
 | Vagas que não servem entram | Termo largo demais ou homônimo | [Calibrar](04-personalizar.md#calibrar-com-vagas-reais): `classificar` e `excluir_titulo` |
 | Vagas que você queria não entram | Falta o termo do título ou um termo de busca | Idem; acrescente o título que a empresa usou |
 | O ranking parece invertido | `alvo.nivel` errado | Confira o nível; ele define quem leva +25 |
-| Nenhuma nota de IA; relatório diz "Gemini: modelo sobrecarregado (503)" | Instabilidade do nível gratuito | Nada a fazer: o monitor tenta de novo e segue sem notas. Rode `check-ia` mais tarde |
+| Nenhuma nota de IA; relatório diz "Gemini: modelo sobrecarregado (503)" | Instabilidade do nível gratuito | O monitor tenta de novo, usa `modelos_reserva` e segue sem notas se não der. Rode `check-ia` mais tarde ([guia 07](07-ia-gratuita-e-custos.md)) |
 | LinkedIn devolve 429 | IP de nuvem limitado | O coletor espera e tenta de novo; a rodada segue com as outras fontes |
 | O workflow não roda | Cron só dispara no branch padrão; ou o repositório ficou 60 dias sem atividade (só repositório público) | Rode manualmente em Actions → Run workflow |
 | O passo "Publicar relatórios" falha ao dar `git push` | Workflow permissions sem escrita | Settings → Actions → General → *Read and write permissions* |
@@ -35,6 +42,13 @@ Gupy, Indeed e LinkedIn são APIs **não oficiais**. Quando uma delas muda, o co
 4. Atualize o endereço e o mapeamento dos campos no coletor, rode `python -m pytest -q` e abra um
    PR no repositório do modelo para todos receberem a correção. O
    [guia 10](10-adicionar-fonte.md) descreve o contrato de uma fonte.
+
+## Notas e dicas
+
+- **Perfil sem a avaliação por IA**: o `doctor` avisa se o `perfil.md` ainda é o modelo, com campos
+  entre colchetes.
+- **Painel em repositório privado**: sem GitHub Pages, o painel HTML vai anexado no e-mail e no
+  Telegram (`notificacoes.anexar_painel`).
 
 ## Pedir ajuda
 

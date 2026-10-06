@@ -72,17 +72,21 @@ Depois, em **Settings → Actions → General → Workflow permissions**, marque
 permissions**. O monitor commita os relatórios e o estado no repositório; sem isso o passo final
 falha.
 
-Pela linha de comando, com o [GitHub CLI](https://cli.github.com) (`winget install GitHub.cli`
-no Windows, `brew install gh` no macOS, `sudo apt install gh` no Debian/Ubuntu), que pede o valor
-sem mostrá-lo:
+**O jeito mais seguro:** o `publicar-secrets` lê o seu `.env` e grava cada valor no GitHub pela
+entrada padrão do [GitHub CLI](https://cli.github.com), **sem nunca exibi-lo** (nem na tela, nem
+na linha de comando). Valores vazios ou de exemplo (`voce@example.com`) são ignorados, e a senha de
+app é gravada sem espaços.
 
 ```bash
+winget install GitHub.cli    # Windows;  macOS: brew install gh;  Debian/Ubuntu: sudo apt install gh
 gh auth login
-gh secret set TELEGRAM_BOT_TOKEN
-gh secret set SMTP_PASSWORD
+python -m vagas_monitor publicar-secrets --dry-run     # lista os NOMES que seriam publicados
+python -m vagas_monitor publicar-secrets               # publica
+python -m vagas_monitor publicar-secrets --perfil      # inclui o perfil.md como PERFIL_MD (repositório público)
 ```
 
-Quem usa a interface do GitHub não precisa do `gh`.
+Quem prefere a interface do GitHub não precisa do `gh`: crie cada secret à mão, como na tabela.
+Depois de qualquer troca de credencial, rode `python -m vagas_monitor doctor` para conferir.
 
 ## Checklist
 

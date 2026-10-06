@@ -4,8 +4,25 @@ O `config.yaml` vem **vazio de propósito**: o monitor não sabe onde você mora
 em que nível está, e não adivinha. Enquanto os campos obrigatórios estiverem vazios, `run` para e
 lista o que falta. Este guia preenche cada um, na ordem.
 
-Se preferir, abra o projeto no Claude Code e peça **"configure o monitor para mim"** (ou use
-`/personalizar`): ele segue este mesmo roteiro e te entrevista.
+**O jeito mais rápido é o `init`**, que faz tudo abaixo por você e valida o resultado:
+
+```bash
+python -m vagas_monitor init                       # pergunta e gera config.yaml e perfil.md
+python -m vagas_monitor init --listar-areas        # o catálogo de 17 áreas prontas
+python -m vagas_monitor init --curriculo cv.pdf    # uma IA propõe áreas e termos (currículo anonimizado e aprovado por você)
+python -m vagas_monitor init --manual --estado SP --cidade Campinas --nivel pleno \
+    --area administrativo-financeiro --area contabil-fiscal:adjacente \
+    --quero "Analista Financeiro Pleno" --nao-quero "Fiscal de Loja"
+```
+
+Cada `--area` é `slug` ou `slug:papel`, e o papel é `alvo` (padrão), `adjacente` ou `ponte`. O
+`init` guarda a versão anterior em `config.yaml.bak` e `perfil.md.bak`. Com o Claude Code, use
+`/personalizar`: ele te entrevista e roda o `init` por você. O que se segue explica cada seção,
+para você conferir e ajustar à mão.
+
+> **Os packs de fora de TI são `beta`**: sementes geradas com IA, sem validação de quem trabalha
+> na área. O ponto de partida é bom; a calibração com vagas **reais** ([guia 05](05-calibrar.md))
+> é o que o valida para você.
 
 ## 1. Onde você busca: `regiao`
 
@@ -112,6 +129,22 @@ habilidades: [excel, conciliação, sap]                       # cada acerto som
 coisa. "Segurança do trabalho" não é "segurança da informação"; "fiscal de loja" não é "fiscal
 tributário"; "agente de negócios" não é "agente de IA".
 
+Há duas listas, e a diferença importa:
+
+- **`excluir_titulo` dentro de uma categoria** tira a vaga **só daquela categoria**. É o que os
+  packs usam: "fiscal de loja" sai de Contábil, mas outra categoria sua ainda pode querer a vaga.
+- **`excluir_titulo` na raiz do config** descarta a vaga **em qualquer categoria**. Use para o que
+  você nunca quer ("vendedor", "motorista", se não for a sua área).
+
+```yaml
+categorias:
+  contabil_fiscal:
+    nome: Contábil e Fiscal
+    titulo: [contador, "analista fiscal"]
+    excluir_titulo: ["fiscal de loja"]      # só desta categoria
+excluir_titulo: [estágio de verão]          # global: nunca interessa
+```
+
 ## 6. O perfil
 
 Copie `perfil.example.md` para `perfil.md` e preencha. É o texto que a IA lê para dar a nota.
@@ -120,7 +153,9 @@ texto no secret `PERFIL_MD` em vez de commitar ([privacidade](06-privacidade.md)
 
 ## Calibrar com vagas reais
 
-Este é o passo que separa um monitor útil de um monitor que parece certo. O método:
+Este é o passo que separa um monitor útil de um monitor que parece certo. O guia completo, com
+as métricas (`calibrar`) e a sondagem do mercado (`calibrar --sondar`), é o [guia 05](05-calibrar.md).
+Em resumo, o método:
 
 1. **Junte vagas de referência.** De 3 a 10 vagas que você **quer** receber (de candidaturas
    passadas ou achadas à mão) e algumas que você **não quer**.
