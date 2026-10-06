@@ -1,0 +1,248 @@
+"""Orquestra a rodada: coleta → filtra → pontua → (IA) → relatórios → estado → notificações."""
+from __future__ import annotations
+
+import logging
+import random
+import time
+from datetime import date, datetime
+from zoneinfo import ZoneInfo
+
+from . import filters, geografia, report, scoring, skills
+from .config import ROOT, avaliacao_cfg, env, load_config, load_profile
+from .dedupe import SOURCE_PREF, merge_duplicates
+from .models import Job
+from .sources import gupy, indeed, linkedin
+from .state import State
+from .validar import contexto_ia, exigir_config_valida
+
+log = logging.getLogger("vagas")
+
+
+def _on(flag, *envs: str) -> bool:
+    """`ativo: auto` liga quando todas as variáveis de ambiente existem."""
+    if flag is True:
+        return True
+    if flag is False:
+        return False
+    return all(env(e) for e in envs)
+
+
+def collect_all(cfg: dict, lookback: int, errors: dict, skip: tuple[str, ...] = ()) -> tuple[list[Job], dict]:
+    terms = cfg["termos_busca"]
+    inc_remote = bool(cfg.get("incluir_remoto", True))
+    src = cfg.get("fontes", {})
+    jobs: list[Job] = []
+    counts: dict[str, int] = {}
+
+    def run_source(name, fn):
+        if not src.get(name, {}).get("ativo", True) or name in skip:
+            return
+        log.info("coletando %s …", name)
+        try:
+            got = fn()
+            counts[name] = len(got)
+            jobs.extend(got)
+            # Zero vagas numa fonte que costuma trazer centenas é a API que mudou, não
+            # um dia sem vagas: a Gupy ficou assim por dias, só com warning no log.
+            if not got:
+                log.error("fonte %s não trouxe nenhuma vaga", name)
+                errors[name] = "nenhuma vaga coletada (a fonte pode ter mudado de API)"
+        except Exception as e:  # noqa: BLE001
+            log.exception("fonte %s falhou", name)
+            errors[name] = f"{type(e).__name__}: {e}"[:200]
+            counts[name] = 0
+
+    # Só remoto: nenhuma busca presencial. Caso contrário cada fonte recebe os estados
+    # (e, no LinkedIn, as cidades-âncora) vindos da seção `regiao`, nunca de um padrão.
+    presencial = cfg.get("_remoto") != "somente"
+    estados = list(cfg.get("_estados") or []) if presencial else []
+    li = src.get("linkedin", {})
+    run_source("gupy", lambda: gupy.collect(terms, lookback, inc_remote, estados))
+    run_source("indeed", lambda: indeed.collect(terms, lookback, int(src.get("indeed", {}).get("resultados_por_busca", 40)),
+                                                inc_remote, estados))
+    run_source("linkedin", lambda: linkedin.collect(terms, locais_linkedin(cfg) if presencial else [],
+                                                    lookback, inc_remote, int(li.get("paginas", 2))))
+    return jobs, counts
+
+
+def locais_linkedin(cfg: dict) -> list[str]:
+    """Locais de busca do LinkedIn: as cidades-âncora configuradas, ou a cidade-base.
+
+    Cada âncora custa tempo de rodada (uma busca por termo), então o padrão é uma só.
+    Sem cidade-base (alcance de estado inteiro), busca o estado como um todo.
+    """
+    estados = cfg.get("_estados") or []
+    base = ((cfg.get("regiao") or {}).get("base") or {}).get("cidade")
+    ancoras = (cfg.get("fontes", {}).get("linkedin", {}) or {}).get("cidades_ancora") or ([base] if base else [])
+    locais = []
+    for cidade in ancoras:
+        loc = geografia.localidade(cidade, estados)
+        if loc:
+            locais.append(loc)
+        else:
+            log.warning("linkedin: cidade-âncora '%s' não existe nos estados configurados", cidade)
+    return locais or [f"{e}, {geografia.PAIS_NOME}" for e in estados]
+
+
+def annotate(job: Job, cfg: dict, today: date) -> bool:
+    """Preenche cidade/modalidade/categoria/senioridade. Retorna False se a vaga está fora do escopo."""
+    job.matched_city = filters.match_city(job, cfg["cidades"], cfg.get("cidades_alias"))
+    job.workplace = filters.detect_workplace(job)
+    remoto = cfg.get("_remoto", "aceitar")
+    if remoto == "somente":
+        if job.workplace != "remote":
+            return False
+    elif not job.matched_city and not (job.workplace == "remote" and remoto != "nao"):
+        return False
+    if filters.excluded(job, cfg.get("excluir_titulo", [])):
+        return False
+    primary, ordered, pts = filters.classify(job, cfg["categorias"])
+    if not primary:
+        return False
+    job.category, job.categories = primary, ordered
+    job.seniority = filters.detect_seniority(job, cfg["senioridade"])
+    job.score, job.reasons = scoring.score_job(job, cfg, pts, today)
+    return True
+
+
+def dedupe(jobs: list[Job]) -> list[Job]:
+    by_id: dict[str, Job] = {}
+    for j in jobs:
+        if j.id not in by_id:
+            by_id[j.id] = j
+    by_key: dict[str, Job] = {}
+    for j in by_id.values():
+        k = j.dedup_key
+        cur = by_key.get(k)
+        if cur is None:
+            by_key[k] = j
+            continue
+        better = (len(j.description) > len(cur.description)) or \
+                 (len(j.description) == len(cur.description) and SOURCE_PREF.get(j.source, 9) < SOURCE_PREF.get(cur.source, 9))
+        if better:
+            by_key[k] = j
+    return list(by_key.values())
+
+
+def run(force: bool = False, dry_run: bool = False, notify: bool = True, lookback: int | None = None,
+        config_path: str | None = None, skip: tuple[str, ...] = ()) -> dict:
+    cfg = load_config(config_path)
+    exigir_config_valida(cfg)  # zero-default: sem região e nível definidos, a rodada não começa
+    profile = load_profile(cfg)
+    now = datetime.now(ZoneInfo(cfg["_fuso"]))
+    now_naive = now.replace(tzinfo=None)
+    today = now.date()
+    est = cfg.get("estado", {}) or {}
+    state = State(ROOT / "state" / "seen.json", key_ttl_days=int(est.get("key_ttl_days", 30)))
+    interval = int(cfg.get("intervalo_dias", 5))
+
+    if not force and not state.due(interval, now_naive):
+        d = state.days_since_last_run(now_naive)
+        log.info("última execução há %.1f dias (cadência: %d). Nada a fazer — use --force para rodar agora.", d, interval)
+        return {"skipped": True, "days_since_last_run": d}
+
+    lb = int(lookback or (cfg.get("first_run_lookback_days", 30) if state.first_run else cfg.get("lookback_days", 7)))
+    log.info("rodada %s — janela %d dias — %s", today, lb, "primeira execução" if state.first_run else "execução regular")
+
+    errors: dict[str, str] = {}
+    raw, counts = collect_all(cfg, lb, errors, skip)
+    log.info("%d vagas brutas de %d fontes", len(raw), len(counts))
+
+    # 1ª passada: escopo + categoria pelo título (LinkedIn ainda sem descrição)
+    scoped = [j for j in dedupe(raw) if annotate(j, cfg, today)]
+    # passe tolerante sobre o conjunto já triado: prefixo no título, razão social
+    # diferente, empresa ausente numa das fontes
+    scoped = merge_duplicates(scoped)
+    for j in scoped:
+        j.is_new = state.is_new(j, today)
+    log.info("%d vagas no escopo (%d novas)", len(scoped), sum(j.is_new for j in scoped))
+
+    # O card de busca do LinkedIn não traz descrição: 1 requisição por vaga. Vale
+    # para toda vaga no escopo, e não só as novas, porque o ranking de tecnologias
+    # conta a janela inteira; antes, numa rodada sem novidades do LinkedIn, as
+    # vagas dele entravam no painel sem nenhuma tecnologia. Novas primeiro.
+    li = cfg.get("fontes", {}).get("linkedin", {})
+    if li.get("buscar_descricao", True) and "linkedin" not in skip:
+        cand = sorted((j for j in scoped if j.source == "linkedin" and not j.description),
+                      key=lambda j: (not j.is_new, -j.score))[: int(li.get("max_descricoes", 80))]
+        ok = 0
+        for i, j in enumerate(cand):
+            if i:
+                time.sleep(1.0 + random.uniform(0, 1))
+            ok += int(linkedin.fetch_description(j))
+        if cand:
+            log.info("linkedin: descrição obtida para %d/%d vagas", ok, len(cand))
+
+    # 2ª passada: com descrições completas, reclassifica e pontua tudo
+    jobs = [j for j in scoped if annotate(j, cfg, today)]
+    jobs.sort(key=lambda j: (not j.is_new, -j.score, j.date_posted or ""))
+    new_jobs = [j for j in jobs if j.is_new]
+
+    # extração de habilidades sobre a descrição completa, antes do truncamento
+    taxonomia = skills.load_taxonomy(ROOT)
+    if taxonomia:
+        com_desc = skills.annotate_jobs(jobs, taxonomia)
+        log.info("habilidades extraídas de %d/%d descrições", com_desc, len(jobs))
+
+    # A avaliação por IA é um enfeite: nunca pode derrubar a rodada. Sem esta
+    # proteção, qualquer falha do SDK descartaria a coleta inteira, o relatório,
+    # o estado e a notificação.
+    ai_done, ai_error = 0, None
+    if new_jobs:
+        try:
+            from .enrich import enrich
+            ai_done, ai_error = enrich(new_jobs, profile, {**avaliacao_cfg(cfg), "_contexto": contexto_ia(cfg)})
+        except Exception as e:  # noqa: BLE001
+            log.exception("avaliação por IA falhou; a rodada segue sem as notas")
+            ai_error = f"{type(e).__name__}: {e}"[:200]
+        if ai_error:
+            errors["ia"] = ai_error
+
+    ctx = report.build_context(jobs, cfg, now, lb, counts, errors,
+                               {"known_jobs": len(state.data["jobs"]), "first_run": state.first_run},
+                               taxonomia=taxonomia)
+    paths = report.write_all(ctx, cfg)
+    log.info("relatórios: %s | %s", paths["md"].relative_to(ROOT), paths["html"].relative_to(ROOT))
+
+    if not dry_run:
+        for j in jobs:
+            state.mark(j, today)
+        state.set_last_run(now_naive)
+        pruned = state.prune(keep_days=int(est.get("keep_days", 120)), today=today)
+        state.save()
+        log.info("estado salvo (%d vagas conhecidas, %d expiradas)", len(state.data["jobs"]), pruned)
+
+    sent: dict[str, bool] = {}
+    if notify and not dry_run:
+        ncfg = cfg.get("notificacoes", {})
+        if _on(ncfg.get("telegram", {}).get("ativo", "auto"), "TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID"):
+            from .notify import telegram
+            try:
+                n = telegram.send(env("TELEGRAM_BOT_TOKEN"), env("TELEGRAM_CHAT_ID"), ctx, int(ncfg.get("telegram", {}).get("top_n", 15)))
+            except Exception as e:  # noqa: BLE001
+                log.error("telegram falhou: %s", e)
+                n = 0
+            sent["telegram"] = n > 0
+            log.info("telegram: %d mensagem(ns) enviada(s)", n)
+        if _on(ncfg.get("email", {}).get("ativo", "auto"), "SMTP_USER", "SMTP_PASSWORD", "EMAIL_TO"):
+            from .notify import email_
+            ok = email_.send(env("SMTP_HOST", "smtp.gmail.com"), int(env("SMTP_PORT", "465")), env("SMTP_USER"),
+                             env("SMTP_PASSWORD"), env("EMAIL_TO"), ctx, paths["md"])
+            sent["email"] = ok
+            log.info("email: %s", "enviado" if ok else "falhou")
+
+    # Notificação que falha não pode passar em silêncio: o passo do Actions ficava
+    # verde e o Telegram ficou 10 dias mudo sem ninguém saber. O motivo vai para o
+    # topo do relatório (que é regerado) e o comando sai com erro.
+    notify_failed = [k for k, ok in sent.items() if not ok]
+    if notify_failed:
+        for k in notify_failed:
+            errors[k] = "envio falhou (veja o log da execução; token ou senha inválidos são a causa mais comum)"
+        paths = report.write_all(ctx, cfg)
+
+    return {
+        "skipped": False, "date": today.isoformat(), "lookback_days": lb, "raw": len(raw),
+        "in_scope": len(jobs), "new": len(new_jobs), "ai_evaluated": ai_done, "ai_error": ai_error,
+        "sources": counts, "errors": errors, "sent": sent, "notify_failed": notify_failed,
+        "paths": {k: str(v) for k, v in paths.items()},
+    }

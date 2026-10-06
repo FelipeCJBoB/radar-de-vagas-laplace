@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m pytest *)",
+      "Bash(python -m vagas_monitor status)",
+      "Bash(python -m vagas_monitor classificar *)",
+      "Bash(python tools/leak_check.py*)",
+      "Bash(ruff check *)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)"
+    ]
+  }
+}

@@ -1,0 +1,122 @@
+# ============================================================
+#  Radar de Vagas Laplace — configuração
+#
+#  Os campos marcados como OBRIGATÓRIO vêm vazios de propósito: o monitor não
+#  assume estado, cidade, área nem nível. Enquanto estiverem vazios, `run` para e
+#  lista o que falta. Guia: guia/04-personalizar.md
+# ============================================================
+
+perfil: perfil.md            # seu resumo profissional (a variável PERFIL_MD tem precedência)
+intervalo_dias: 5            # cadência: executa se passaram >= 5 dias da última execução
+lookback_days: 7             # janela de publicação buscada
+first_run_lookback_days: 30  # primeira execução: janela maior para popular o relatório
+
+estado:                      # memória entre rodadas (state/seen.json)
+  key_ttl_days: 30           # o par título+empresa deixa de suprimir depois disso:
+                             # posição reaberta meses depois volta a ser anunciada
+  keep_days: 120             # tempo que o registro de uma vaga sobrevive no arquivo
+
+# ------------------------------------------------------------------
+#  ONDE você busca
+# ------------------------------------------------------------------
+regiao:
+  estados: []                # OBRIGATÓRIO (exceto remoto: somente). Siglas: [SP] ou [SP, RJ]
+  base: {cidade: "", uf: ""} # OBRIGATÓRIO (exceto alcance: estado ou remoto: somente)
+  alcance: regiao_imediata   # cidade | regiao_imediata | estado | lista
+                             #   regiao_imediata = a área de deslocamento diário do IBGE
+  cidades: []                # só para alcance: lista
+  apelidos: {}               # nomes alternativos -> cidade canônica, ex.: {Camboriú: Balneário Camboriú}
+  remoto: aceitar            # nao | aceitar | preferir | somente
+  fuso: America/Sao_Paulo
+  idioma_ia: pt-BR           # idioma do comentário da avaliação por IA
+
+# ------------------------------------------------------------------
+#  O QUE você busca
+# ------------------------------------------------------------------
+alvo:
+  nivel: ""                  # OBRIGATÓRIO: estagio | junior | pleno | senior | lideranca
+  aceita_niveis: []          # níveis vizinhos que também servem, ex.: [pleno]
+
+# Termos enviados às fontes (LinkedIn, Indeed e vagas remotas). A Gupy varre o estado
+# inteiro e filtramos localmente. Cada termo custa tempo de rodada: acrescente um só
+# quando ele trouxer um perfil de vaga que os outros não alcançam.
+termos_busca: []             # OBRIGATÓRIO. Ex.: [analista financeiro, contador]
+
+# Categorias na ordem de preferência (prioridade 1 = mais desejada).
+# `titulo`: termos que, no TÍTULO, classificam a vaga (30 pts).
+# `descricao`: precisa de >= 2 termos distintos na DESCRIÇÃO para classificar (12 pts).
+# `bonus`: soma na pontuação; negativo para categorias de reserva (ponte).
+# OBRIGATÓRIO: ao menos uma. Exemplo (descomente e adapte):
+#
+# categorias:
+#   financeiro:
+#     nome: Financeiro
+#     prioridade: 1
+#     bonus: 12
+#     titulo: ["analista financeiro", "assistente financeiro", tesouraria]
+#     descricao: ["contas a pagar", "contas a receber", "fluxo de caixa", conciliação]
+categorias: {}
+
+senioridade:                 # detectada no título (e em dicas da fonte)
+  junior: [júnior, junior, jr, "jr.", estágio, estagiário, estagiária, trainee, "entry level",
+           iniciante, aprendiz, "nível i", assistente]
+  pleno: [pleno, plena, pl, "pl.", "mid-level", "mid level", "nível ii"]
+  senior: [sênior, senior, sr, "sr.", especialista, specialist, lead, líder, gerente, manager,
+           coordenador, coordenadora, head, principal, staff, diretor, diretora, arquiteto,
+           arquiteta, "tech lead", supervisor, supervisora, "nível iii"]
+
+# Títulos que NUNCA interessam, mesmo que casem com uma categoria. Use para homônimos:
+# "segurança do trabalho" não é "segurança da informação".
+excluir_titulo: []
+
+# Habilidades suas (cada acerto soma pontos, máx. +18).
+habilidades: []
+
+fontes:
+  linkedin:
+    ativo: true
+    cidades_ancora: []                               # vazio = usa regiao.base.cidade; cada âncora custa tempo de rodada
+    paginas: 2                                       # 10 vagas por página
+    buscar_descricao: true                           # 1 requisição por vaga do LinkedIn no escopo (o card não traz descrição)
+    max_descricoes: 80
+  indeed:
+    ativo: true
+    resultados_por_busca: 40
+  gupy:
+    ativo: true
+
+relatorio:
+  pasta: reports
+  html: docs/index.html
+  top_n: 20                  # destaques no topo do relatório
+  url_publica: ""            # link "Relatório completo" nas notificações; vazio = sem link
+
+notificacoes:
+  telegram:
+    ativo: auto              # auto = envia se TELEGRAM_BOT_TOKEN e TELEGRAM_CHAT_ID existirem
+    top_n: 15
+  email:
+    ativo: auto              # auto = envia se SMTP_USER / SMTP_PASSWORD / EMAIL_TO existirem
+
+# ------------------------------------------------------------------
+#  Avaliação por IA (opcional): nota de 0 a 10 e comentário por vaga.
+#
+#  `provedor: auto` usa o primeiro com chave configurada, na ordem
+#  Gemini -> Anthropic. O Gemini vem primeiro porque o nível gratuito
+#  do AI Studio cobre este volume (25 vagas a cada 5 dias) sem custo,
+#  enquanto a API da Anthropic é pré-paga.
+#
+#  Valores: auto | gemini | anthropic | nenhum
+# ------------------------------------------------------------------
+avaliacao:
+  provedor: auto
+  max_vagas: 25              # avalia só as N melhores vagas novas da rodada
+  gemini:
+    # Alias que o Google mantém apontando para o Flash atual. Fixar uma versão
+    # ("gemini-3.6-flash") evita surpresa de comportamento, mas quebra sozinho
+    # quando aquela versão sai do ar.
+    modelo: gemini-flash-latest
+    rpm: 10                  # nível gratuito do Flash; as chamadas são espaçadas
+  anthropic:
+    modelo: claude-opus-5
+    esforco: low

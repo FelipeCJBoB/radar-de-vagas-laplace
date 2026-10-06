@@ -1,0 +1,19 @@
+# ambiente
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+logs/
+*.tmp
+
+# SEGREDOS e dados pessoais: nunca versionar
+.env
+tools/leak_denylist.local.txt
+perfil.md.local
+curriculo*.pdf
+curriculo*.docx
+calibracao/referencia.yaml
+
+# configuração local do Claude Code
+.claude/settings.local.json

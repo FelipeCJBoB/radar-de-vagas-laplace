@@ -1,0 +1,18 @@
+[project]
+name = "radar-de-vagas-laplace"
+version = "1.0.0"
+description = "Monitor automático de vagas por região e área de atuação no Brasil (LinkedIn, Indeed e Gupy)"
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 140
+target-version = "py310"
+extend-exclude = ["dados"]
+
+[tool.ruff.lint]
+# Só erros reais (sintaxe, nomes não definidos, imports sobrando). O estilo fica a cargo
+# de quem contribui; regras demais afastam gente e geram ruído em PR.
+select = ["E4", "E7", "E9", "F"]

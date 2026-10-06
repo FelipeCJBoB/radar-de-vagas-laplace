@@ -1,0 +1,221 @@
+# ============================================================
+#  CONFIGURAÇÃO DE TESTE (fixture): config completa usada pela suíte.
+#  Não é o config.yaml de ninguém: os dados abaixo existem só para os testes
+#  terem categorias, cidades e termos reais com que trabalhar.
+# ============================================================
+
+perfil: perfil.md            # resumo profissional usado na pontuação e na avaliação por IA
+intervalo_dias: 5            # cadência: executa se passaram >= 5 dias da última execução
+lookback_days: 7             # janela de publicação buscada (sobreposição c/ a cadência de 5 dias)
+first_run_lookback_days: 30  # primeira execução: janela maior para popular o relatório
+
+estado:                      # memória entre rodadas (state/seen.json)
+  key_ttl_days: 30           # o par título+empresa deixa de suprimir depois disso:
+                             # posição reaberta meses depois volta a ser anunciada
+  keep_days: 120             # tempo que o registro de uma vaga sobrevive no arquivo
+
+regiao:
+  estados: [SC]
+  base: {cidade: Itajaí, uf: SC}
+  alcance: lista
+  cidades: [Itajaí, Navegantes, Balneário Camboriú, Gaspar, Blumenau, Joinville, Jaraguá do Sul, Brusque]
+  apelidos:
+    Camboriú: Balneário Camboriú
+  remoto: preferir
+alvo:
+  nivel: junior
+
+# Termos enviados às fontes. A Gupy varre SC inteiro independente destes termos;
+# eles valem para LinkedIn, Indeed e para as vagas remotas.
+# Cada termo custa tempo de rodada: são 3 buscas de cidade no LinkedIn mais 2 no
+# Indeed. Acrescente um só quando ele trouxer um perfil de vaga que os outros não
+# alcançam.
+termos_busca:
+  - dados
+  - data
+  - inteligência artificial
+  - machine learning
+  - LLM
+  - agentes de IA
+  - full stack
+  - python
+  - BI
+  - SAP
+  - analista de sistemas
+  - devops
+
+# Categorias na ordem de preferência (prioridade 1 = mais desejada).
+# `titulo`: termos que, no TÍTULO, classificam a vaga (30 pts).
+# `descricao`: precisa de >= 2 termos distintos na DESCRIÇÃO para classificar (12 pts).
+categorias:
+  agentes_ia:
+    nome: Agentes de IA
+    prioridade: 1
+    bonus: 12
+    titulo: ["agente de ia", "agentes de ia", "agente ia", "agentes ia", "agente de inteligência artificial",
+             "agentes inteligentes", "agentes autônomos", "agentes llm", "ai agent", "ai agents", "agent ai",
+             agentic, langchain, langgraph, crewai, autogen, mcp, rag, "ai engineer", "engenheiro de ia",
+             "engenheira de ia", "automação com ia"]
+    descricao: [langchain, langgraph, crewai, autogen, "agentes de ia", "ai agents", agentic,
+                "multi-agent", multiagente, rag, mcp, "function calling", "tool calling",
+                "orquestração de agentes", "agentes autônomos"]
+  dados:
+    nome: Dados
+    prioridade: 2
+    bonus: 10
+    titulo: [dados, data, bi, "business intelligence", "power bi", analytics, etl, dba,
+             "banco de dados", "big data", "data lake", dataops, dbt, "data analyst",
+             "data engineer", "data scientist"]
+    descricao: ["análise de dados", "engenharia de dados", "ciência de dados", "power bi", sql, etl,
+                "pipeline de dados", "data warehouse", dashboards, looker, tableau, bigquery,
+                databricks, spark, airflow, "modelagem de dados", "banco de dados"]
+  ia_llm:
+    nome: IA / LLMs
+    prioridade: 3
+    bonus: 8
+    titulo: ["inteligência artificial", ia, ai, "machine learning", ml, llm, llms, "ia generativa",
+             "generative ai", genai, nlp, "deep learning", "visão computacional", "computer vision",
+             "ml engineer", mlops, "cientista de ml"]
+    descricao: ["machine learning", llm, "inteligência artificial", "modelos de linguagem", openai,
+                anthropic, claude, gpt, gemini, "hugging face", pytorch, tensorflow, "scikit-learn",
+                sklearn, "ia generativa", "generative ai", nlp, "deep learning", mlops, "prompt engineering"]
+  fullstack:
+    nome: Full Stack / Dev
+    prioridade: 4
+    bonus: 4
+    titulo: ["full stack", fullstack, "full-stack", "desenvolvedor web", "desenvolvedora web",
+             "web developer", backend, "back-end", "back end", frontend, "front-end", "front end",
+             python, node, react, django, fastapi, flask, "desenvolvedor de software",
+             "software developer", "software engineer", "engenheiro de software", desenvolvedor,
+             desenvolvedora, programador, programadora, developer]
+    descricao: ["full stack", fullstack, react, node, django, fastapi, flask, javascript, typescript,
+                "api rest", "rest api", html, css, "next.js", vue, angular]
+  # As duas categorias abaixo são de reserva (papel de ponte): entram no radar sem disputar o topo com Dados e IA.
+  sistemas_negocio:
+    nome: Sistemas e ERP
+    prioridade: 5
+    bonus: -10
+    # Suporte técnico e help desk ficam de fora de propósito: trazem muito atendimento
+    # ao usuário e pouco do repertório da área.
+    titulo: [sap, abap, erp, totvs, protheus, datasul, sankhya, "analista de sistemas",
+             "analista de ti", "analista de tecnologia", implantador, implantadora,
+             "implantação de sistemas", "consultor de sistemas", "consultora de sistemas",
+             "analista funcional", "analista de negócios", "business analyst",
+             "analista de processos", "analista de integração"]
+    descricao: [sap, "sap ecc", "sap ewm", "s/4hana", abap, erp, totvs, protheus, datasul,
+                "implantação de sistemas", "parametrização", "analista funcional",
+                "levantamento de requisitos", "mapeamento de processos", crm, salesforce]
+  devops_auto:
+    nome: DevOps e Automação
+    prioridade: 6
+    bonus: -6
+    titulo: [devops, sre, "site reliability", "engenheiro de infraestrutura", "analista de infraestrutura",
+             "cloud engineer", "engenheiro de nuvem", rpa, "automação de processos",
+             "analista de automação", "engenheiro de automação", "platform engineer",
+             # "analista de segurança" sozinho pegava "Segurança do Trabalho", que é
+             # saúde ocupacional. Só termos inequívocos de segurança da informação.
+             "segurança da informação", cibersegurança, "cyber security", cybersecurity,
+             "segurança cibernética", "security engineer", "security analyst", soc, pentest]
+    descricao: [devops, kubernetes, docker, terraform, ansible, "ci/cd", jenkins,
+                "github actions", "gitlab ci", rpa, uipath, "power automate", n8n,
+                "infraestrutura como código", observabilidade, "segurança da informação"]
+
+senioridade:                 # detectada no título (e em dicas da fonte)
+  junior: [júnior, junior, jr, "jr.", estágio, estagiário, estagiária, trainee, "entry level",
+           iniciante, aprendiz, "nível i", assistente]
+  pleno: [pleno, plena, pl, "pl.", "mid-level", "mid level", "nível ii"]
+  senior: [sênior, senior, sr, "sr.", especialista, specialist, lead, líder, gerente, manager,
+           coordenador, coordenadora, head, principal, staff, diretor, diretora, arquiteto,
+           arquiteta, "tech lead", supervisor, supervisora, "nível iii"]
+
+excluir_titulo: [vendedor, vendedora, motorista, porteiro, recepcionista, "auxiliar de produção", telemarketing,
+                 # homônimos que caíam nas categorias novas: saúde ocupacional não é
+                 # segurança da informação, e agente/consultor comercial não é agente de IA
+                 "segurança do trabalho", "técnico de segurança", "engenheiro de segurança do trabalho",
+                 "agente de negócios", "agente comercial", "consultor de vendas", "consultora de vendas",
+                 "analista de segurança do trabalho"]
+
+habilidades:                 # do currículo — cada acerto soma pontos (máx. +18)
+  - python
+  - sql
+  - power bi
+  - excel
+  - access
+  - sap
+  - pandas
+  - polars
+  - duckdb
+  - sqlite
+  - pytest
+  - git
+  - machine learning
+  - séries temporais
+  - optuna
+  - shap
+  - gradient boosting
+  - xgboost
+  - lightgbm
+  - llm
+  - agentes
+  - langchain
+  - javascript
+  - html
+  - css
+  - nicegui
+  - ci/cd
+  - github actions
+  - kpi
+  - análise de dados
+  - estatística
+  - power query
+  - dax
+  - fastapi
+
+fontes:
+  linkedin:
+    ativo: true
+    cidades_ancora: [Itajaí, Blumenau, Joinville]
+    paginas: 2                                       # 10 vagas por página
+    buscar_descricao: true                           # 1 requisição por vaga do LinkedIn no escopo (o card não traz descrição)
+    max_descricoes: 80
+  indeed:
+    ativo: true
+    resultados_por_busca: 40
+  gupy:
+    ativo: true
+
+relatorio:
+  pasta: reports
+  html: docs/index.html
+  top_n: 20                  # destaques no topo do relatório
+  url_publica: ""   # link "Relatório completo" no Telegram/e-mail
+
+notificacoes:
+  telegram:
+    ativo: auto              # auto = envia se TELEGRAM_BOT_TOKEN e TELEGRAM_CHAT_ID existirem
+    top_n: 15
+  email:
+    ativo: auto              # auto = envia se SMTP_USER / SMTP_PASSWORD / EMAIL_TO existirem
+
+# ------------------------------------------------------------------
+#  Avaliação por IA (opcional): nota de 0 a 10 e comentário por vaga.
+#
+#  `provedor: auto` usa o primeiro com chave configurada, na ordem
+#  Gemini -> Anthropic. O Gemini vem primeiro porque o nível gratuito
+#  do AI Studio cobre este volume (25 vagas a cada 5 dias) sem custo,
+#  enquanto a API da Anthropic é pré-paga.
+#
+#  Valores: auto | gemini | anthropic | nenhum
+# ------------------------------------------------------------------
+avaliacao:
+  provedor: auto
+  max_vagas: 25              # avalia só as N melhores vagas novas da rodada
+  gemini:
+    # Alias que o Google mantém apontando para o Flash atual. Fixar uma versão
+    # ("gemini-3.6-flash") evita surpresa de comportamento, mas quebra sozinho
+    # quando aquela versão sai do ar.
+    modelo: gemini-flash-latest
+    rpm: 10                  # nível gratuito do Flash; as chamadas são espaçadas
+  anthropic:
+    modelo: claude-opus-5
+    esforco: low
