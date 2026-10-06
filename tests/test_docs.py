@@ -66,8 +66,8 @@ def test_todo_arquivo_de_pack_e_guia_citado_existe():
     for doc in DOCS:
         for caminho in re.findall(r"`((?:guia|areas|tools|dados|tests|calibracao)/[A-Za-z0-9_./\-]+\.[a-z]+)`",
                                   doc.read_text(encoding="utf-8")):
-            if caminho.endswith(("referencia.yaml",)):
-                continue  # arquivo pessoal, criado pelo `init`
+            if caminho.endswith(("referencia.yaml", "leak_denylist.local.txt")):
+                continue  # arquivos pessoais: o `init` ou a própria pessoa os cria, e o git os ignora
             assert (RAIZ / caminho).exists(), f"{doc.name} cita {caminho}, que não existe"
 
 
