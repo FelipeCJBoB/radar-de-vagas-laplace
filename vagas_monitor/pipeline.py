@@ -84,15 +84,19 @@ def locais_linkedin(cfg: dict) -> list[str]:
     return locais or [f"{e}, {geografia.PAIS_NOME}" for e in estados]
 
 
-def annotate(job: Job, cfg: dict, today: date) -> bool:
-    """Preenche cidade/modalidade/categoria/senioridade. Retorna False se a vaga está fora do escopo."""
+def dentro_do_escopo(job: Job, cfg: dict) -> bool:
+    """Cidade-alvo ou remoto aceito. Preenche `matched_city` e `workplace`."""
     job.matched_city = filters.match_city(job, cfg["cidades"], cfg.get("cidades_alias"))
     job.workplace = filters.detect_workplace(job)
     remoto = cfg.get("_remoto", "aceitar")
     if remoto == "somente":
-        if job.workplace != "remote":
-            return False
-    elif not job.matched_city and not (job.workplace == "remote" and remoto != "nao"):
+        return job.workplace == "remote"
+    return bool(job.matched_city) or (job.workplace == "remote" and remoto != "nao")
+
+
+def annotate(job: Job, cfg: dict, today: date) -> bool:
+    """Preenche cidade/modalidade/categoria/senioridade. Retorna False se a vaga está fora do escopo."""
+    if not dentro_do_escopo(job, cfg):
         return False
     if filters.excluded(job, cfg.get("excluir_titulo", [])):
         return False

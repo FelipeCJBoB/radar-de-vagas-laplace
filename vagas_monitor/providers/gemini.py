@@ -51,7 +51,9 @@ def criar_cliente(cfg: dict):
     return genai.Client()
 
 
-def avaliar(cliente, system: str, texto: str, cfg: dict) -> str:
+def avaliar(cliente, system: str, texto: str, cfg: dict, schema: dict | None = None,
+            max_tokens: int = 800) -> str:
+    """`schema` e `max_tokens` permitem outros usos além da nota (extração do currículo)."""
     from google.genai import types
 
     g = (cfg.get("gemini") or {})
@@ -61,9 +63,9 @@ def avaliar(cliente, system: str, texto: str, cfg: dict) -> str:
         config=types.GenerateContentConfig(
             system_instruction=system,
             response_mime_type="application/json",
-            response_schema=SCHEMA,
+            response_schema=schema or SCHEMA,
             temperature=0,
-            max_output_tokens=800,
+            max_output_tokens=max_tokens,
             # O SDK liga chamada automática de função por padrão e avisa no log a
             # cada requisição. Aqui não há ferramenta nenhuma para chamar: desligar
             # cala o aviso e elimina um caminho de execução que não queremos.

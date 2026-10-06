@@ -35,11 +35,25 @@ def criar_cliente(cfg: dict):
     return anthropic.Anthropic()
 
 
-def avaliar(cliente, system: str, texto: str, cfg: dict) -> str:
+def _estrito(schema):
+    """A saída estruturada da Anthropic exige `additionalProperties: false` em todo objeto."""
+    if isinstance(schema, dict):
+        out = {k: _estrito(v) for k, v in schema.items()}
+        if out.get("type") == "object":
+            out.setdefault("additionalProperties", False)
+        return out
+    if isinstance(schema, list):
+        return [_estrito(v) for v in schema]
+    return schema
+
+
+def avaliar(cliente, system: str, texto: str, cfg: dict, schema: dict | None = None,
+            max_tokens: int = 800) -> str:
+    """`schema` e `max_tokens` permitem outros usos além da nota (extração do currículo)."""
     a = (cfg.get("anthropic") or {})
     resp = cliente.beta.messages.create(
         model=a.get("modelo", MODELO_PADRAO),
-        max_tokens=800,
+        max_tokens=max_tokens,
         betas=["server-side-fallback-2026-07-01"],
         fallbacks="default",
         # o prompt do sistema é idêntico em todas as vagas da rodada: cacheá-lo
@@ -47,7 +61,7 @@ def avaliar(cliente, system: str, texto: str, cfg: dict) -> str:
         system=[{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}],
         messages=[{"role": "user", "content": texto}],
         output_config={"effort": a.get("esforco", "low"),
-                       "format": {"type": "json_schema", "schema": SCHEMA}},
+                       "format": {"type": "json_schema", "schema": _estrito(schema) if schema else SCHEMA}},
     )
     if resp.stop_reason == "refusal":
         raise ValueError("a avaliação foi recusada por filtro de segurança")

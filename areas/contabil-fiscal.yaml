@@ -6,13 +6,15 @@ nome: Contábil e Fiscal
 status: beta
 resumo: 'Contabilidade, impostos e rotinas fiscais. Semente beta: gerada com IA e ainda sem validação de quem trabalha
   na área.'
-titulo: [contador, contadora, assistente contábil, analista contábil, auxiliar contábil, contabilidade, analista
-    fiscal, assistente fiscal, auxiliar fiscal, analista tributário, controller, escrituração fiscal]
+titulo: [contador, contadora, assistente contábil, analista contábil, auxiliar contábil, analista fiscal, assistente
+    fiscal, auxiliar fiscal, analista tributário, controller, escrituração fiscal, analista de contabilidade, assistente
+    de contabilidade, auxiliar de contabilidade, técnico em contabilidade, técnico contábil]
 descricao: [balanço, balancete, escrituração, tributos, obrigações acessórias, sped, icms, pis, cofins, apuração
     de impostos, conciliação contábil]
 excluir_titulo: [fiscal de loja, fiscal de prevenção, fiscal de caixa, fiscal de pátio, fiscal de obra, fiscal de
     obras]
 habilidades_mercado: [excel, sped, domínio, sap, totvs]
 termos_busca: [contador, analista fiscal, contabilidade, assistente contábil]
-exemplos_positivos: [Contador Pleno, Analista Fiscal, Assistente Contábil, Analista Tributário Sênior]
-exemplos_negativos: [Fiscal de Loja, Vendedor Externo, Cozinheiro]
+exemplos_positivos: [Contador Pleno, Analista Fiscal, Assistente Contábil, Analista Tributário Sênior, Analista
+    de Contabilidade]
+exemplos_negativos: [Fiscal de Loja, Vendedor Externo, Cozinheiro, Analista de Suporte Jr - Área Contabilidade]

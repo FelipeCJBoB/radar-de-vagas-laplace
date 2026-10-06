@@ -29,7 +29,8 @@ DENYLIST_LOCAL = Path(__file__).resolve().parent / "leak_denylist.local.txt"
 
 IGNORAR_DIRS = {".git", ".venv", "__pycache__", ".pytest_cache", "node_modules", "logs", ".ruff_cache"}
 IGNORAR_EXT = {".gz", ".png", ".jpg", ".jpeg", ".gif", ".ico", ".pyc", ".zip", ".pdf"}
-IGNORAR_ARQ = {"leak_check.py", "test_leak_check.py"}  # contêm os padrões e exemplos plantados
+# contêm os padrões e dados FICTÍCIOS plantados de propósito, para testar a detecção e a anonimização
+IGNORAR_ARQ = {"leak_check.py", "test_leak_check.py", "test_anonimizar.py"}
 
 # (nome, regex). Os detectores só pegam o formato; não há como saber se o valor é real.
 DETECTORES = [

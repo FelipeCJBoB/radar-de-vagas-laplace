@@ -185,6 +185,134 @@ def cmd_classificar(a) -> int:
     return 0
 
 
+def _perguntar(texto: str, padrao: str | None = None, obrigatorio: bool = True) -> str:
+    sufixo = f" [{padrao}]" if padrao else ""
+    while True:
+        r = input(f"{texto}{sufixo}: ").strip() or (padrao or "")
+        if r or not obrigatorio:
+            return r
+        print("  (obrigatório)")
+
+
+def cmd_init(a) -> int:
+    """Configura o monitor para a pessoa: config.yaml, perfil.md e referência de calibração."""
+    from . import anonimizar, areas, assistente, calibracao
+    from .config import avaliacao_cfg, load_config
+    from .enrich import escolher_provedor
+
+    if a.listar_areas:
+        for slug, p in areas.listar().items():
+            print(f"{slug:30s} [{p['status']:9s}] {p['nome']}")
+        return 0
+
+    tty = sys.stdin.isatty() and not a.nao_interativo
+    e = {"estados": [x.strip() for x in (a.estado or "").split(",") if x.strip()], "cidade": a.cidade, "uf": a.uf,
+         "alcance": a.alcance, "remoto": a.remoto, "nivel": a.nivel, "objetivo": a.objetivo, "curriculo": a.curriculo,
+         "manual": a.manual, "areas": a.area or [], "anonimizar": not a.sem_anonimizar,
+         "nomes": a.nome or [], "ocultar": a.ocultar or [], "quero": a.quero or [], "nao_quero": a.nao_quero or []}
+    if tty:
+        print("Vou te fazer algumas perguntas. Enter aceita o valor entre colchetes.\n")
+        e["remoto"] = e["remoto"] or _perguntar("Vagas remotas (nao, aceitar, preferir, somente)", "aceitar")
+        if e["remoto"] != "somente":
+            if not e["estados"]:
+                e["estados"] = [x.strip() for x in _perguntar("UF(s) onde busca, separadas por vírgula (ex.: SP)").split(",")]
+            e["cidade"] = e["cidade"] or _perguntar("Cidade onde você mora ou quer trabalhar")
+            e["alcance"] = e["alcance"] or _perguntar("Alcance (cidade, regiao_imediata, estado)", "regiao_imediata")
+        e["nivel"] = e["nivel"] or _perguntar("Nível (estagio, junior, pleno, senior, lideranca)")
+        e["objetivo"] = e["objetivo"] or _perguntar("Em uma frase, o que você busca", obrigatorio=False)
+        if e["curriculo"] is None and not e["manual"]:
+            e["curriculo"] = _perguntar("Caminho do currículo (.txt .md .docx .pdf), ou Enter para escolher as áreas à mão",
+                                        obrigatorio=False) or None
+    tem_ia = bool(escolher_provedor(avaliacao_cfg(load_config(a.config)) if Path(a.config or "config.yaml").exists() else {}))
+    if e["curriculo"] and not e["manual"] and not tem_ia:
+        print("Nenhuma chave de IA no ambiente (GEMINI_API_KEY ou ANTHROPIC_API_KEY): seguindo no modo manual.")
+        e["manual"] = True
+    if (not e["curriculo"] or e["manual"]) and not e["areas"]:
+        if not tty:
+            print("Informe --area (ex.: --area saude --area educacao:adjacente) ou um currículo. Catálogo: init --listar-areas")
+            return 2
+        catalogo = list(areas.listar().items())
+        for i, (slug, p) in enumerate(catalogo, 1):
+            print(f"  {i:2d}. {p['nome']}  [{p['status']}]")
+        for papel, ajuda in (("alvo", "o que você QUER ser"), ("adjacente", "vizinhas que também servem"),
+                             ("ponte", "o que sua experiência sustenta, mas não é o desejo")):
+            nums = _perguntar(f"Números das áreas '{papel}' ({ajuda}), separados por vírgula", obrigatorio=(papel == "alvo"))
+            for n in [x for x in nums.replace(" ", "").split(",") if x.isdigit()]:
+                if 0 < int(n) <= len(catalogo):
+                    e["areas"].append(f"{catalogo[int(n) - 1][0]}:{papel}")
+    if tty and not e["quero"] and not e["nao_quero"]:
+        print("\nVagas de REFERÊNCIA deixam medir se a configuração acerta. Cole títulos, um por linha (Enter vazio termina).")
+        for chave, rotulo in (("quero", "que você QUER receber"), ("nao_quero", "que você NÃO quer")):
+            print(f"Títulos {rotulo}:")
+            while (t := input("  > ").strip()):
+                e[chave].append(t)
+
+    if e["curriculo"] and not e["manual"]:
+        texto, achados = assistente.previa_anonimizada(e)
+        print("\n--- texto que seria enviado à IA (dados pessoais removidos: " + anonimizar.resumo(achados) + ") ---")
+        print(texto[:3000] + ("\n[...]" if len(texto) > 3000 else ""))
+        print("--- fim ---")
+        if a.sim:
+            e["aprovado"] = True
+        elif tty:
+            e["aprovado"] = input("Enviar este texto à IA? Confira se não restou nenhum dado pessoal. [s/N] ").strip().lower() in ("s", "sim", "y")
+        if not e.get("aprovado"):
+            print("Envio não aprovado. Nada foi enviado. Rode de novo com --manual ou aprove o texto (--sim).")
+            return 1
+    try:
+        # os arquivos saem ao lado do config informado (padrão: a raiz do projeto)
+        r = assistente.executar_init(e, raiz=Path(a.config).resolve().parent if a.config else None)
+    except (assistente.InitErro, FileNotFoundError, RuntimeError, ValueError) as err:
+        print(f"Erro: {err}")
+        return 2
+    print(f"\nGravado: {r['config']} e {r['perfil']} (cópias .bak dos anteriores, se existiam).")
+    print(f"Nível: {r['nivel']} | termos de busca: {', '.join(r['termos_busca'])}")
+    print("Categorias: " + ", ".join(r["categorias"].values()))
+    print("Cidades: " + ", ".join(r["cidades"]) + (" ..." if len(r["cidades"]) >= 12 else ""))
+    for av in r["avisos"]:
+        print(f"  ! {av}")
+    if r["pendencias"]:
+        print("\nPendências no config:\n" + "\n".join(f"  - {p}" for p in r["pendencias"]))
+        return 2
+    if r["medicao"]:
+        print("\n" + "\n".join(calibracao.relatorio_medicao(r["medicao"])))
+    print("\nPróximo passo: python -m vagas_monitor run --force --dry-run --no-notify   e leia reports/LATEST.md")
+    return 0
+
+
+def cmd_calibrar(a) -> int:
+    """Mede o config contra vagas de referência (offline) ou sonda o mercado da região (rede)."""
+    from . import calibracao
+    from .config import ROOT, load_config
+    from .validar import validar_config
+
+    cfg = load_config(a.config)
+    pend = validar_config(cfg)
+    if pend:
+        print("config.yaml incompleto:\n" + "\n".join(f"  - {p}" for p in pend))
+        return 2
+    if a.sondar:
+        fontes = tuple(x.strip() for x in a.fontes.split(",") if x.strip())
+        print(f"Coletando títulos da região ({', '.join(fontes)}, últimos {a.dias} dias)...")
+        titulos, erros = calibracao.coletar_titulos(cfg, a.dias, fontes)
+        for k, v in erros.items():
+            print(f"  ! {k}: {v}")
+        if not titulos:
+            print("Nenhum título coletado.")
+            return 1
+        print("\n".join(calibracao.relatorio_sondagem(calibracao.sondar(cfg, titulos))))
+        return 0
+    caminho = Path(a.referencia) if a.referencia else ROOT / "calibracao" / "referencia.yaml"
+    try:
+        ref = calibracao.carregar_referencia(caminho)
+    except FileNotFoundError as err:
+        print(f"{err}\nCrie o arquivo com `init` (--quero/--nao-quero) ou à mão: listas `quero` e `nao_quero` de títulos.")
+        return 2
+    m = calibracao.medir(cfg, ref["quero"], ref["nao_quero"], a.meta)
+    print("\n".join(calibracao.relatorio_medicao(m)))
+    return 0 if m["ok"] else 1
+
+
 def cmd_render(a) -> int:
     """Regera Markdown/HTML a partir do JSON de uma rodada (útil para ajustar o layout sem coletar)."""
     from . import report
@@ -223,6 +351,33 @@ def main(argv=None) -> int:
     cl.add_argument("titulos", nargs="+", help="um ou mais títulos de vaga, entre aspas")
     cl.add_argument("--descricao", help="texto de descrição, se quiser testar a regra de descrição")
     cl.set_defaults(fn=cmd_classificar)
+    ini = sub.add_parser("init", help="configura o monitor para você: região, nível, áreas e perfil")
+    ini.add_argument("--listar-areas", action="store_true", help="mostra o catálogo de áreas e sai")
+    ini.add_argument("--estado", help="UF(s), separadas por vírgula (ex.: SP ou SP,RJ)")
+    ini.add_argument("--cidade", help="cidade-base")
+    ini.add_argument("--uf", help="UF da cidade-base (se houver mais de um estado)")
+    ini.add_argument("--alcance", choices=["cidade", "regiao_imediata", "estado", "lista"], help="padrão: regiao_imediata")
+    ini.add_argument("--remoto", choices=["nao", "aceitar", "preferir", "somente"], help="padrão: aceitar")
+    ini.add_argument("--nivel", choices=["estagio", "junior", "pleno", "senior", "lideranca"])
+    ini.add_argument("--objetivo", help="em uma frase, o que você busca")
+    ini.add_argument("--curriculo", help="currículo (.txt .md .docx .pdf) para a IA propor áreas e termos")
+    ini.add_argument("--manual", action="store_true", help="sem IA: você escolhe as áreas do catálogo")
+    ini.add_argument("--area", action="append", help="slug[:papel] (alvo, adjacente, ponte); repetível")
+    ini.add_argument("--quero", action="append", help="título de vaga que você QUER (referência); repetível")
+    ini.add_argument("--nao-quero", action="append", help="título de vaga que você NÃO quer; repetível")
+    ini.add_argument("--nome", action="append", help="seu nome, para removê-lo do currículo; repetível")
+    ini.add_argument("--ocultar", action="append", help="empregador ou escola a ocultar do texto enviado; repetível")
+    ini.add_argument("--sem-anonimizar", action="store_true", help="NÃO remove dados pessoais (não recomendado)")
+    ini.add_argument("--sim", action="store_true", help="aprova o envio do texto anonimizado à IA, sem perguntar")
+    ini.add_argument("--nao-interativo", action="store_true", help="nunca pergunta; falta de dado vira erro")
+    ini.set_defaults(fn=cmd_init)
+    cal = sub.add_parser("calibrar", help="mede o config contra vagas de referência, ou sonda o mercado (--sondar)")
+    cal.add_argument("--referencia", help="arquivo de referência (padrão: calibracao/referencia.yaml)")
+    cal.add_argument("--meta", type=float, default=0.8, help="recall e corte mínimos (padrão: 0.8)")
+    cal.add_argument("--sondar", action="store_true", help="coleta títulos reais da região e mostra termos e candidatos")
+    cal.add_argument("--fontes", default="gupy", help="fontes da sondagem, separadas por vírgula (padrão: gupy)")
+    cal.add_argument("--dias", type=int, default=30, help="janela da sondagem em dias (padrão: 30)")
+    cal.set_defaults(fn=cmd_calibrar)
     rr = sub.add_parser("render", help="regera Markdown/HTML a partir do JSON da última rodada")
     rr.add_argument("json_path", nargs="?")
     rr.set_defaults(fn=cmd_render)
