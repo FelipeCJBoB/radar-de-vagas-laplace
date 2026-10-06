@@ -98,6 +98,17 @@ def send_message(token: str, chat_id: str, text: str) -> bool:
     return r.ok
 
 
+def send_document(token: str, chat_id: str, caminho, legenda: str = "") -> bool:
+    """Envia um arquivo (o painel HTML). Em repositório privado não há Pages, então o painel vai no chat."""
+    with open(caminho, "rb") as f:
+        r = requests.post(API.format(token=token, method="sendDocument"),
+                          data={"chat_id": chat_id, "caption": legenda[:1000]},
+                          files={"document": ("painel.html", f, "text/html")}, timeout=60)
+    if not r.ok:
+        log.error("telegram sendDocument %s: %s", r.status_code, r.text[:300])
+    return r.ok
+
+
 def send(token: str, chat_id: str, ctx: dict, top_n: int = 15) -> int:
     ok = 0
     for m in build_messages(ctx, top_n):

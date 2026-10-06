@@ -299,3 +299,49 @@ def test_lista_de_limpeza_cobre_todo_provedor_registrado():
     from conftest import EFEITOS_EXTERNOS
     for mod in DISPONIVEIS.values():
         assert mod.ENV_VAR in EFEITOS_EXTERNOS, mod.NOME
+
+
+# --- modelos de reserva -----------------------------------------------------
+class _ProvPorModelo(_Prov):
+    def __init__(self, *a, **k):
+        super().__init__(*a, **k)
+        self.modelos = []
+
+    def avaliar(self, cliente, system, texto, cfg):
+        self.modelos.append((cfg.get("falso") or {}).get("modelo"))
+        return super().avaliar(cliente, system, texto, cfg)
+
+
+def test_modelo_principal_fora_do_ar_usa_a_reserva_e_segue_nela(monkeypatch):
+    """O 503 do modelo principal durou a rodada inteira em 03/10/2026 (0 de 25 avaliadas)."""
+    prov = _ProvPorModelo([RuntimeError("503 sobrecarregado"), OK, OK, OK])
+    cfg = _instala(monkeypatch, prov)
+    cfg["falso"] = {"modelo": "principal", "modelos_reserva": ["leve"]}
+    done, motivo = enrich(_jobs(3), "perfil", cfg)
+    assert done == 3 and motivo is None
+    # principal falha uma vez; a reserva responde; as vagas seguintes já vão direto na reserva
+    assert prov.modelos == ["principal", "leve", "leve", "leve"]
+
+
+def test_reserva_tambem_fora_do_ar_conta_para_o_disjuntor(monkeypatch):
+    prov = _ProvPorModelo([RuntimeError("503")] * 20)
+    cfg = _instala(monkeypatch, prov)
+    cfg["falso"] = {"modelos_reserva": ["leve"]}
+    done, motivo = enrich(_jobs(10), "perfil", cfg)
+    assert done == 0 and "503" in motivo
+    assert prov.chamadas == FALHAS_SEGUIDAS_ATE_DESISTIR * 2  # principal + reserva, por vaga, até desistir
+
+
+def test_erro_fatal_nao_tenta_reserva(monkeypatch):
+    prov = _ProvPorModelo([PermissionError("chave inválida")], fatais=(PermissionError,))
+    cfg = _instala(monkeypatch, prov)
+    cfg["falso"] = {"modelos_reserva": ["leve"]}
+    done, _ = enrich(_jobs(5), "perfil", cfg)
+    assert done == 0 and prov.chamadas == 1
+
+
+def test_sem_reserva_o_comportamento_nao_muda(monkeypatch):
+    prov = _ProvPorModelo([RuntimeError("503")] * 10)
+    cfg = _instala(monkeypatch, prov)
+    enrich(_jobs(10), "perfil", cfg)
+    assert prov.chamadas == FALHAS_SEGUIDAS_ATE_DESISTIR

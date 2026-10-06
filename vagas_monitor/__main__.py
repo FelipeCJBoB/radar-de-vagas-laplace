@@ -321,6 +321,28 @@ def cmd_doctor(a) -> int:
     return rc
 
 
+def cmd_publicar_secrets(a) -> int:
+    """Grava no GitHub os secrets do .env, sem mostrar nenhum valor."""
+    from . import segredos
+    from .config import ROOT
+    env_path = Path(a.env) if a.env else ROOT / ".env"
+    if not env_path.exists():
+        print(f"{env_path} não existe. Copie .env.example para .env e preencha (guia/02).")
+        return 2
+    valores, ignorados = segredos.coletar(env_path, ROOT / "perfil.md" if a.perfil else None)
+    if not valores:
+        print("Nada a publicar: o .env está vazio ou só tem valores de exemplo.")
+        return 2
+    destino = a.repo or "o repositório desta pasta (gh decide pelo git remote)"
+    print(f"Publicando {len(valores)} secret(s) em {destino}. Os valores NÃO são exibidos.\n")
+    resultados = segredos.publicar(valores, a.repo, a.dry_run)
+    for r in resultados:
+        print(f"  {'ok   ' if r.ok else 'FALHOU'} {r.nome}" + (f"  ({r.detalhe})" if r.detalhe else ""))
+    if ignorados:
+        print("\nIgnorados (vazios ou de exemplo): " + ", ".join(ignorados))
+    return 0 if all(r.ok for r in resultados) else 1
+
+
 def cmd_render(a) -> int:
     """Regera Markdown/HTML a partir do JSON de uma rodada (útil para ajustar o layout sem coletar)."""
     from . import report
@@ -390,6 +412,12 @@ def main(argv=None) -> int:
     dr.add_argument("--offline", action="store_true", help="não faz chamadas de rede")
     dr.add_argument("--ia", action="store_true", help="testa a chave de IA com uma chamada real")
     dr.set_defaults(fn=cmd_doctor)
+    ps = sub.add_parser("publicar-secrets", help="grava no GitHub os secrets do .env, sem mostrar os valores (usa o gh)")
+    ps.add_argument("--repo", help="dono/nome do repositório (padrão: o da pasta atual)")
+    ps.add_argument("--env", help="caminho do .env (padrão: .env na raiz)")
+    ps.add_argument("--perfil", action="store_true", help="publica também o perfil.md como secret PERFIL_MD")
+    ps.add_argument("--dry-run", action="store_true", help="só lista o que seria publicado")
+    ps.set_defaults(fn=cmd_publicar_secrets)
     rr = sub.add_parser("render", help="regera Markdown/HTML a partir do JSON da última rodada")
     rr.add_argument("json_path", nargs="?")
     rr.set_defaults(fn=cmd_render)

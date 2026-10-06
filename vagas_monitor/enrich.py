@@ -121,6 +121,32 @@ def enrich(jobs: list[Job], profile: str, cfg: dict) -> tuple[int, str | None]:
     esperas = list(cfg.get("esperas_tentativa", ESPERA_ENTRE_TENTATIVAS))
     done, seguidas, ultimo_erro, desistir = 0, 0, None, False
 
+    # Modelos de reserva (`avaliacao.<provedor>.modelos_reserva`): o 503 do nível gratuito do
+    # modelo principal pode durar a rodada inteira (0 de 25 vagas avaliadas em 03/10/2026), e um
+    # modelo mais leve costuma estar de pé. Depois do primeiro socorro que funciona, a rodada
+    # segue nele, em vez de pagar de novo as esperas do principal a cada vaga.
+    reservas = list((cfg.get(nome) or {}).get("modelos_reserva") or [])
+    cfg_atual = cfg
+
+    def com_modelo(modelo: str) -> dict:
+        return {**cfg, nome: {**(cfg.get(nome) or {}), "modelo": modelo}}
+
+    def socorrer(vaga):
+        """Tenta os modelos de reserva para esta vaga. Devolve a resposta ou None."""
+        nonlocal cfg_atual, ultimo_erro
+        for reserva in reservas:
+            try:
+                resposta = prov.avaliar(cliente, system, _job_text(vaga), com_modelo(reserva))
+            except Exception as e2:  # noqa: BLE001
+                motivo2, _ = prov.classificar_erro(e2)
+                ultimo_erro = f"{prov.NOME} ({reserva}): {motivo2}"[:200]
+                log.warning("modelo de reserva %s também falhou: %s", reserva, motivo2)
+                continue
+            log.warning("modelo principal indisponível; usando %s no resto da rodada", reserva)
+            cfg_atual = com_modelo(reserva)
+            return resposta
+        return None
+
     for i, job in enumerate(alvo):
         if desistir:
             break
@@ -130,7 +156,7 @@ def enrich(jobs: list[Job], profile: str, cfg: dict) -> tuple[int, str | None]:
         bruto = None
         for tentativa in range(len(esperas) + 1):
             try:
-                bruto = prov.avaliar(cliente, system, _job_text(job), cfg)
+                bruto = prov.avaliar(cliente, system, _job_text(job), cfg_atual)
                 break
             except Exception as e:  # noqa: BLE001
                 motivo, fatal = prov.classificar_erro(e)
@@ -144,7 +170,11 @@ def enrich(jobs: list[Job], profile: str, cfg: dict) -> tuple[int, str | None]:
                     log.warning("%s — nova tentativa em %.0fs", ultimo_erro, espera)
                     time.sleep(espera)
                     continue
-                # esgotou as tentativas desta vaga: agora sim conta para o disjuntor
+                # esgotou as tentativas no modelo atual: tenta os de reserva antes de contar a falha
+                bruto = socorrer(job)
+                if bruto is not None:
+                    break
+                # sem reserva, ou ela também falhou: agora sim conta para o disjuntor
                 seguidas += 1
                 log.warning("%s (%d vaga[s] seguida[s] sem resposta)", ultimo_erro, seguidas)
                 if seguidas >= FALHAS_SEGUIDAS_ATE_DESISTIR:

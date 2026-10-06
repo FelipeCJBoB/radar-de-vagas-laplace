@@ -75,7 +75,9 @@ def build_mercado_html(ctx: dict, top: int = 15) -> str:
             "<th style='padding:6px 8px;text-align:right'>%</th></tr>" + linhas + "</table>")
 
 
-def send(host: str, port: int, user: str, password: str, to: str, ctx: dict, md_path: Path | None = None) -> bool:
+def send(host: str, port: int, user: str, password: str, to: str, ctx: dict, md_path: Path | None = None,
+         html_path: Path | None = None) -> bool:
+    """`html_path`: o painel, anexado para quem usa repositório privado (sem GitHub Pages)."""
     msg = EmailMessage()
     msg["Subject"] = f"Radar de Vagas — {ctx['run_date_br']} — {ctx['new_count']} novas"
     msg["From"] = user
@@ -84,9 +86,11 @@ def send(host: str, port: int, user: str, password: str, to: str, ctx: dict, md_
     msg.add_alternative(build_html(ctx), subtype="html")
     if md_path and Path(md_path).exists():
         msg.add_attachment(Path(md_path).read_bytes(), maintype="text", subtype="markdown", filename=Path(md_path).name)
+    if html_path and Path(html_path).exists():
+        msg.add_attachment(Path(html_path).read_bytes(), maintype="text", subtype="html", filename="painel.html")
     try:
         with smtplib.SMTP_SSL(host, int(port), timeout=60) as s:
-            s.login(user, password)
+            s.login(user, password.replace(" ", ""))  # a senha de app vem com espaços de 4 em 4
             s.send_message(msg)
         return True
     except Exception as e:  # noqa: BLE001

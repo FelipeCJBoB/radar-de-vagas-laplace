@@ -27,6 +27,17 @@ def _on(flag, *envs: str) -> bool:
     return all(env(e) for e in envs)
 
 
+def anexar_painel(cfg: dict, ctx: dict) -> bool:
+    """Painel como anexo quando não há link público para ele (repositório privado, sem Pages).
+
+    `notificacoes.anexar_painel`: true, false ou auto (padrão: anexa se não houver `url_publica`).
+    """
+    valor = (cfg.get("notificacoes") or {}).get("anexar_painel", "auto")
+    if isinstance(valor, bool):
+        return valor
+    return not ctx.get("report_url")
+
+
 def collect_all(cfg: dict, lookback: int, errors: dict, skip: tuple[str, ...] = ()) -> tuple[list[Job], dict]:
     terms = cfg["termos_busca"]
     inc_remote = bool(cfg.get("incluir_remoto", True))
@@ -226,12 +237,19 @@ def run(force: bool = False, dry_run: bool = False, notify: bool = True, lookbac
             except Exception as e:  # noqa: BLE001
                 log.error("telegram falhou: %s", e)
                 n = 0
+            if n > 0 and anexar_painel(cfg, ctx):
+                try:
+                    telegram.send_document(env("TELEGRAM_BOT_TOKEN"), env("TELEGRAM_CHAT_ID"), paths["html"],
+                                           "Painel completo: abra o arquivo no navegador.")
+                except Exception as e:  # noqa: BLE001
+                    log.warning("painel não enviado ao telegram: %s", e)  # o resumo já chegou: não é falha
             sent["telegram"] = n > 0
             log.info("telegram: %d mensagem(ns) enviada(s)", n)
         if _on(ncfg.get("email", {}).get("ativo", "auto"), "SMTP_USER", "SMTP_PASSWORD", "EMAIL_TO"):
             from .notify import email_
             ok = email_.send(env("SMTP_HOST", "smtp.gmail.com"), int(env("SMTP_PORT", "465")), env("SMTP_USER"),
-                             env("SMTP_PASSWORD"), env("EMAIL_TO"), ctx, paths["md"])
+                             env("SMTP_PASSWORD"), env("EMAIL_TO"), ctx, paths["md"],
+                             paths["html"] if anexar_painel(cfg, ctx) else None)
             sent["email"] = ok
             log.info("email: %s", "enviado" if ok else "falhou")
 

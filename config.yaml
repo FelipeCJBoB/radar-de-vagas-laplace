@@ -116,6 +116,8 @@ avaliacao:
     # ("gemini-3.6-flash") evita surpresa de comportamento, mas quebra sozinho
     # quando aquela versão sai do ar.
     modelo: gemini-flash-latest
+    # Se o modelo principal estiver sobrecarregado (503), tenta estes, na ordem, antes de desistir.
+    modelos_reserva: [gemini-flash-lite-latest]
     rpm: 10                  # nível gratuito do Flash; as chamadas são espaçadas
   anthropic:
     modelo: claude-opus-5
