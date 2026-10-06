@@ -1,0 +1,18 @@
+# Pack de área: Contábil e Fiscal
+# status: beta  (beta = semente gerada com IA, sem validação de quem trabalha na área)
+# Cada termo de `titulo` classifica a vaga pelo TÍTULO; 3 termos de `descricao` classificam pela descrição.
+# Os exemplos viram teste (tests/test_areas.py): positivos DEVEM classificar, negativos NÃO.
+nome: Contábil e Fiscal
+status: beta
+resumo: 'Contabilidade, impostos e rotinas fiscais. Semente beta: gerada com IA e ainda sem validação de quem trabalha
+  na área.'
+titulo: [contador, contadora, assistente contábil, analista contábil, auxiliar contábil, contabilidade, analista
+    fiscal, assistente fiscal, auxiliar fiscal, analista tributário, controller, escrituração fiscal]
+descricao: [balanço, balancete, escrituração, tributos, obrigações acessórias, sped, icms, pis, cofins, apuração
+    de impostos, conciliação contábil]
+excluir_titulo: [fiscal de loja, fiscal de prevenção, fiscal de caixa, fiscal de pátio, fiscal de obra, fiscal de
+    obras]
+habilidades_mercado: [excel, sped, domínio, sap, totvs]
+termos_busca: [contador, analista fiscal, contabilidade, assistente contábil]
+exemplos_positivos: [Contador Pleno, Analista Fiscal, Assistente Contábil, Analista Tributário Sênior]
+exemplos_negativos: [Fiscal de Loja, Vendedor Externo, Cozinheiro]

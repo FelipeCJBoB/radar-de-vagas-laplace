@@ -1,0 +1,18 @@
+# Pack de área: Engenharia Civil e Construção
+# status: beta  (beta = semente gerada com IA, sem validação de quem trabalha na área)
+# Cada termo de `titulo` classifica a vaga pelo TÍTULO; 3 termos de `descricao` classificam pela descrição.
+# Os exemplos viram teste (tests/test_areas.py): positivos DEVEM classificar, negativos NÃO.
+nome: Engenharia Civil e Construção
+status: beta
+resumo: 'Obras, projetos, orçamentos e arquitetura. Semente beta: gerada com IA e ainda sem validação de quem trabalha
+  na área.'
+titulo: [engenheiro civil, engenheira civil, técnico em edificações, mestre de obras, encarregado de obras, arquiteto,
+  arquiteta, orçamentista, planejador de obras, engenheiro de obras, fiscal de obra, fiscal de obras, analista de
+    obras, pedreiro, projetista, desenhista projetista, cadista, topógrafo]
+descricao: [canteiro de obras, orçamento de obras, cronograma físico-financeiro, projetos executivos, autocad, revit,
+  medição de obras, alvenaria, fundações]
+excluir_titulo: []
+habilidades_mercado: [autocad, revit, sienge, msproject, orçamento]
+termos_busca: [engenheiro civil, arquiteto, orçamentista, mestre de obras]
+exemplos_positivos: [Engenheiro Civil Pleno, Arquiteta, Orçamentista de Obras, Fiscal de Obras]
+exemplos_negativos: [Analista de RH, Desenvolvedor Python, Vendedor]

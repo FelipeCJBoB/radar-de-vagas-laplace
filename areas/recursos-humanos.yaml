@@ -1,0 +1,19 @@
+# Pack de área: Recursos Humanos
+# status: beta  (beta = semente gerada com IA, sem validação de quem trabalha na área)
+# Cada termo de `titulo` classifica a vaga pelo TÍTULO; 3 termos de `descricao` classificam pela descrição.
+# Os exemplos viram teste (tests/test_areas.py): positivos DEVEM classificar, negativos NÃO.
+nome: Recursos Humanos
+status: beta
+resumo: 'Recrutamento, departamento pessoal, treinamento e remuneração. Semente beta: gerada com IA e ainda sem
+  validação de quem trabalha na área.'
+titulo: [analista de rh, assistente de rh, auxiliar de rh, recursos humanos, recrutador, recrutadora, recrutamento
+    e seleção, analista de recrutamento, departamento pessoal, business partner de rh, hrbp, analista de treinamento,
+  analista de remuneração, analista de benefícios, talent acquisition]
+descricao: [recrutamento e seleção, folha de pagamento, admissão, demissão, treinamento e desenvolvimento, esocial,
+  benefícios, clima organizacional, cargos e salários]
+excluir_titulo: []
+habilidades_mercado: [excel, folha de pagamento, esocial, totvs, gupy]
+termos_busca: [analista de rh, recrutador, departamento pessoal, recrutamento e seleção]
+exemplos_positivos: [Analista de RH Generalista, Recrutador(a) e Selecionador(a), Assistente de Departamento Pessoal,
+  Analista de Recursos Humanos Pleno]
+exemplos_negativos: [Vendedor Interno, Programador Java, Mecânico Industrial]

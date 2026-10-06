@@ -1,0 +1,18 @@
+# Pack de área: Comercial e Vendas
+# status: beta  (beta = semente gerada com IA, sem validação de quem trabalha na área)
+# Cada termo de `titulo` classifica a vaga pelo TÍTULO; 3 termos de `descricao` classificam pela descrição.
+# Os exemplos viram teste (tests/test_areas.py): positivos DEVEM classificar, negativos NÃO.
+nome: Comercial e Vendas
+status: beta
+resumo: 'Vendas internas e externas, contas-chave, pré-venda e gestão comercial. Semente beta: gerada com IA e ainda
+  sem validação de quem trabalha na área.'
+titulo: [vendedor, vendedora, consultor de vendas, consultora de vendas, representante comercial, executivo de contas,
+  analista comercial, assistente comercial, gerente comercial, sdr, bdr, inside sales, key account, account executive,
+  promotor de vendas, gerente de loja]
+descricao: [prospecção, carteira de clientes, metas de vendas, negociação, fechamento de vendas, crm, funil de vendas,
+  pós-venda, comissionamento]
+excluir_titulo: []
+habilidades_mercado: [crm, negociação, excel, salesforce, hubspot]
+termos_busca: [vendedor, consultor de vendas, analista comercial, inside sales]
+exemplos_positivos: [Vendedor Externo, Consultor de Vendas, Analista Comercial Pleno, SDR Inside Sales]
+exemplos_negativos: [Contador, Engenheiro Civil, Pedagoga]

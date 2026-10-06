@@ -1,0 +1,19 @@
+# Pack de área: Desenvolvimento de Software
+# status: validado  (beta = semente gerada com IA, sem validação de quem trabalha na área)
+# Cada termo de `titulo` classifica a vaga pelo TÍTULO; 3 termos de `descricao` classificam pela descrição.
+# Os exemplos viram teste (tests/test_areas.py): positivos DEVEM classificar, negativos NÃO.
+nome: Desenvolvimento de Software
+status: validado
+resumo: 'Desenvolvimento web e de software: back-end, front-end e full stack.'
+titulo: [full stack, fullstack, full-stack, desenvolvedor web, desenvolvedora web, web developer, backend, back-end,
+  back end, frontend, front-end, front end, python, node, react, django, fastapi, flask, desenvolvedor de software,
+  software developer, software engineer, engenheiro de software, desenvolvedor, desenvolvedora, programador, programadora,
+  developer]
+descricao: [full stack, fullstack, react, node, django, fastapi, flask, javascript, typescript, api rest, rest api,
+  html, css, next.js, vue, angular]
+excluir_titulo: []
+habilidades_mercado: [python, javascript, typescript, react, node, git, api rest, sql]
+termos_busca: [full stack, desenvolvedor, python, backend]
+exemplos_positivos: [Desenvolvedor Full Stack Júnior, Software Engineer, Desenvolvedora Backend Python, Engenheiro
+    de Software Pleno]
+exemplos_negativos: [Auxiliar de Almoxarifado, Enfermeira, Advogado Trabalhista]

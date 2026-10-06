@@ -1,0 +1,18 @@
+# Pack de área: Educação
+# status: beta  (beta = semente gerada com IA, sem validação de quem trabalha na área)
+# Cada termo de `titulo` classifica a vaga pelo TÍTULO; 3 termos de `descricao` classificam pela descrição.
+# Os exemplos viram teste (tests/test_areas.py): positivos DEVEM classificar, negativos NÃO.
+nome: Educação
+status: beta
+resumo: 'Docência, coordenação pedagógica e apoio escolar. Semente beta: gerada com IA e ainda sem validação de
+  quem trabalha na área.'
+titulo: [professor, professora, pedagogo, pedagoga, coordenador pedagógico, coordenadora pedagógica, orientador
+    educacional, auxiliar de sala, monitor escolar, instrutor, instrutora, tutor, docente, psicopedagogo, auxiliar
+    de educação infantil]
+descricao: [sala de aula, plano de aula, projeto pedagógico, alunos, educação infantil, ensino fundamental, ensino
+    médio, bncc, avaliação de aprendizagem]
+excluir_titulo: []
+habilidades_mercado: [bncc, plano de aula, moodle, google classroom]
+termos_busca: [professor, pedagogo, coordenador pedagógico, auxiliar de sala]
+exemplos_positivos: [Professor de Matemática, Pedagoga, Coordenador Pedagógico, Auxiliar de Sala]
+exemplos_negativos: [Enfermeiro, Contador, Soldador]

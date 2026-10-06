@@ -1,0 +1,20 @@
+# Pack de área: Infraestrutura, DevOps e Segurança da Informação
+# status: validado  (beta = semente gerada com IA, sem validação de quem trabalha na área)
+# Cada termo de `titulo` classifica a vaga pelo TÍTULO; 3 termos de `descricao` classificam pela descrição.
+# Os exemplos viram teste (tests/test_areas.py): positivos DEVEM classificar, negativos NÃO.
+nome: Infraestrutura, DevOps e Segurança da Informação
+status: validado
+resumo: DevOps, SRE, nuvem, automação (RPA) e segurança da informação.
+titulo: [devops, sre, site reliability, engenheiro de infraestrutura, analista de infraestrutura, cloud engineer,
+  engenheiro de nuvem, rpa, automação de processos, analista de automação, engenheiro de automação, platform engineer,
+  segurança da informação, cibersegurança, cyber security, cybersecurity, segurança cibernética, security engineer,
+  security analyst, soc, pentest]
+descricao: [devops, kubernetes, docker, terraform, ansible, ci/cd, jenkins, github actions, gitlab ci, rpa, uipath,
+  power automate, n8n, infraestrutura como código, observabilidade, segurança da informação]
+excluir_titulo: [segurança do trabalho, técnico de segurança, engenheiro de segurança do trabalho, analista de segurança
+    do trabalho]
+habilidades_mercado: [docker, kubernetes, terraform, ci/cd, aws, azure, linux]
+termos_busca: [devops, cloud, segurança da informação, infraestrutura]
+exemplos_positivos: [Analista DevOps Pleno, Engenheiro de Nuvem, Analista de Segurança da Informação, Analista de
+    RPA]
+exemplos_negativos: [Técnico de Segurança do Trabalho, Vendedor Externo, Pedagoga]

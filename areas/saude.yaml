@@ -1,0 +1,20 @@
+# Pack de área: Saúde
+# status: beta  (beta = semente gerada com IA, sem validação de quem trabalha na área)
+# Cada termo de `titulo` classifica a vaga pelo TÍTULO; 3 termos de `descricao` classificam pela descrição.
+# Os exemplos viram teste (tests/test_areas.py): positivos DEVEM classificar, negativos NÃO.
+nome: Saúde
+status: beta
+resumo: 'Enfermagem, fisioterapia, farmácia, nutrição, psicologia e áreas correlatas. Semente beta: gerada com IA
+  e ainda sem validação de quem trabalha na área.'
+titulo: [enfermeiro, enfermeira, técnico de enfermagem, técnica de enfermagem, auxiliar de enfermagem, fisioterapeuta,
+  nutricionista, farmacêutico, farmacêutica, técnico em farmácia, médico, médica, dentista, cirurgião-dentista,
+  psicólogo, psicóloga, fonoaudiólogo, biomédico, técnico em radiologia, cuidador de idosos, terapeuta ocupacional,
+  auxiliar de saúde bucal]
+descricao: [coren, crm, crf, crefito, assistência ao paciente, prontuário, hospitalar, plantão, sinais vitais, procedimentos
+    de enfermagem, unidade de terapia intensiva]
+excluir_titulo: [veterinário, veterinária]
+habilidades_mercado: [bls, acls, prontuário eletrônico, mv, tasy]
+termos_busca: [enfermeiro, técnico de enfermagem, fisioterapeuta, nutricionista]
+exemplos_positivos: [Enfermeiro(a) Assistencial, Técnico de Enfermagem Plantonista, Fisioterapeuta, Farmacêutico
+    Responsável]
+exemplos_negativos: [Médico Veterinário, Analista Financeiro, Programador]

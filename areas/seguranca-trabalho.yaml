@@ -1,0 +1,20 @@
+# Pack de área: Segurança do Trabalho e Meio Ambiente
+# status: beta  (beta = semente gerada com IA, sem validação de quem trabalha na área)
+# Cada termo de `titulo` classifica a vaga pelo TÍTULO; 3 termos de `descricao` classificam pela descrição.
+# Os exemplos viram teste (tests/test_areas.py): positivos DEVEM classificar, negativos NÃO.
+nome: Segurança do Trabalho e Meio Ambiente
+status: beta
+resumo: 'SST, EHS e meio ambiente. Não é segurança da informação. Semente beta: gerada com IA e ainda sem validação
+  de quem trabalha na área.'
+titulo: [técnico de segurança do trabalho, técnica de segurança do trabalho, engenheiro de segurança do trabalho,
+  engenheira de segurança do trabalho, analista de sst, analista de segurança do trabalho, técnico em segurança
+    do trabalho, analista de meio ambiente, técnico em meio ambiente, analista de saúde e segurança, analista de
+    ehs, analista de hse]
+descricao: [nr-10, nr-12, nr-35, pgr, pcmso, ltcat, cipa, inspeção de segurança, epi, treinamentos de segurança,
+  investigação de acidentes]
+excluir_titulo: [segurança da informação, cibersegurança, segurança patrimonial]
+habilidades_mercado: [nr-10, nr-35, pgr, ltcat, iso 45001]
+termos_busca: [técnico de segurança do trabalho, engenheiro de segurança do trabalho, analista de sst]
+exemplos_positivos: [Técnico de Segurança do Trabalho, Engenheira de Segurança do Trabalho, Analista de SST, Analista
+    de Meio Ambiente]
+exemplos_negativos: [Analista de Segurança da Informação, Redator, Professor]

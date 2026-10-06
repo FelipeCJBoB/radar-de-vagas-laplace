@@ -126,6 +126,8 @@ def validar_config(cfg: dict) -> list[str]:
         for chave, c in cats.items():
             if not isinstance(c, dict) or not c.get("nome") or not c.get("titulo"):
                 erros.append(f"categorias.{chave}: precisa de 'nome' e de ao menos um termo em 'titulo'.")
+            elif not isinstance(c.get("excluir_titulo", []), list):
+                erros.append(f"categorias.{chave}.excluir_titulo: precisa ser uma lista.")
     if not cfg.get("senioridade"):
         erros.append("senioridade está vazio. Veja os termos de nível no config de exemplo.")
     return erros

@@ -1,0 +1,19 @@
+# Pack de área: Atendimento ao Cliente
+# status: beta  (beta = semente gerada com IA, sem validação de quem trabalha na área)
+# Cada termo de `titulo` classifica a vaga pelo TÍTULO; 3 termos de `descricao` classificam pela descrição.
+# Os exemplos viram teste (tests/test_areas.py): positivos DEVEM classificar, negativos NÃO.
+nome: Atendimento ao Cliente
+status: beta
+resumo: 'Atendimento, SAC, call center, recepção e relacionamento. Semente beta: gerada com IA e ainda sem validação
+  de quem trabalha na área.'
+titulo: [atendente, atendimento ao cliente, analista de atendimento, assistente de atendimento, operador de telemarketing,
+  operador de call center, operador de atendimento, sac, customer success, analista de relacionamento, recepcionista,
+  agente de atendimento, central de atendimento, consultor de atendimento, customer service, operador de caixa]
+descricao: [atendimento ao cliente, central de atendimento, sac, ligações receptivas, registro de ocorrências, satisfação
+    do cliente, telemarketing, pós-venda, nps]
+excluir_titulo: []
+habilidades_mercado: [crm, zendesk, atendimento omnichannel, comunicação]
+termos_busca: [atendente, atendimento ao cliente, recepcionista, sac]
+exemplos_positivos: [Atendente de SAC, Recepcionista, Operador de Telemarketing, Analista de Relacionamento com
+    o Cliente]
+exemplos_negativos: [Engenheiro Civil, Contador, Professor]

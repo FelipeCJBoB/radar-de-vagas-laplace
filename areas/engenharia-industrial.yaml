@@ -1,0 +1,21 @@
+# Pack de área: Engenharia e Indústria
+# status: beta  (beta = semente gerada com IA, sem validação de quem trabalha na área)
+# Cada termo de `titulo` classifica a vaga pelo TÍTULO; 3 termos de `descricao` classificam pela descrição.
+# Os exemplos viram teste (tests/test_areas.py): positivos DEVEM classificar, negativos NÃO.
+nome: Engenharia e Indústria
+status: beta
+resumo: 'Produção, manutenção, qualidade e processos industriais. Semente beta: gerada com IA e ainda sem validação
+  de quem trabalha na área.'
+titulo: [engenheiro de produção, engenheira de produção, engenheiro mecânico, engenheiro de manutenção, engenheiro
+    de qualidade, engenheiro de processos, analista de qualidade, técnico de manutenção, técnico em manutenção,
+  mecânico industrial, eletricista industrial, técnico em mecânica, técnico em eletromecânica, técnico em automação,
+  supervisor de produção, operador de produção, inspetor de qualidade, soldador, caldeireiro, engenheiro eletricista,
+  técnico em eletrotécnica]
+descricao: [linha de produção, manutenção preventiva, manutenção corretiva, controle de qualidade, melhoria contínua,
+  lean, ordens de produção, nr-12, ferramentas da qualidade, inspeção]
+excluir_titulo: []
+habilidades_mercado: [autocad, solidworks, clp, lean, iso 9001, 5s]
+termos_busca: [engenheiro de produção, técnico de manutenção, analista de qualidade, soldador]
+exemplos_positivos: [Engenheiro de Produção Júnior, Mecânico Industrial, Técnico em Manutenção Elétrica, Analista
+    de Qualidade]
+exemplos_negativos: [Redator, Contador, Psicólogo]

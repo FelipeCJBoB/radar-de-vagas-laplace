@@ -48,6 +48,11 @@ def classify(job: Job, categories: dict) -> tuple[Optional[str], list[str], dict
     d = normalize(job.description)[:8000]
     hits: dict[str, int] = {}
     for key, cat in categories.items():
+        # Exclusão POR CATEGORIA: "segurança do trabalho" não é "segurança da informação",
+        # mas continua sendo uma vaga legítima de segurança do trabalho. Uma exclusão global
+        # mataria a vaga nas duas; esta só a tira da categoria que a confundiria.
+        if any_term(t, cat.get("excluir_titulo") or []):
+            continue
         pts = 0
         if any_term(t, cat.get("titulo", [])):
             pts = 30

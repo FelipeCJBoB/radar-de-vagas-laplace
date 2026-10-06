@@ -1,0 +1,25 @@
+# Pack de área: Dados e IA
+# status: validado  (beta = semente gerada com IA, sem validação de quem trabalha na área)
+# Cada termo de `titulo` classifica a vaga pelo TÍTULO; 3 termos de `descricao` classificam pela descrição.
+# Os exemplos viram teste (tests/test_areas.py): positivos DEVEM classificar, negativos NÃO.
+nome: Dados e IA
+status: validado
+resumo: Análise, engenharia e ciência de dados, BI, machine learning, LLMs e agentes de IA.
+titulo: [dados, data, bi, business intelligence, power bi, analytics, etl, dba, banco de dados, big data, data lake,
+  dataops, dbt, data analyst, data engineer, data scientist, inteligência artificial, ia, ai, machine learning,
+  ml, llm, llms, ia generativa, generative ai, genai, nlp, deep learning, visão computacional, computer vision,
+  ml engineer, mlops, cientista de ml, agente de ia, agentes de ia, agente ia, agentes ia, agente de inteligência
+    artificial, agentes inteligentes, agentes autônomos, agentes llm, ai agent, ai agents, agent ai, agentic, langchain,
+  langgraph, crewai, autogen, mcp, rag, ai engineer, engenheiro de ia, engenheira de ia, automação com ia]
+descricao: [análise de dados, engenharia de dados, ciência de dados, power bi, sql, etl, pipeline de dados, data
+    warehouse, dashboards, looker, tableau, bigquery, databricks, spark, airflow, modelagem de dados, banco de dados,
+  machine learning, llm, inteligência artificial, modelos de linguagem, openai, anthropic, claude, gpt, gemini,
+  hugging face, pytorch, tensorflow, scikit-learn, sklearn, ia generativa, generative ai, nlp, deep learning, mlops,
+  prompt engineering, langchain, langgraph, crewai, autogen, agentes de ia, ai agents, agentic, multi-agent, multiagente,
+  rag, mcp, function calling, tool calling, orquestração de agentes, agentes autônomos]
+excluir_titulo: [agente de negócios, agente comercial]
+habilidades_mercado: [python, sql, power bi, excel, pandas, machine learning, llm, etl]
+termos_busca: [dados, data, inteligência artificial, machine learning, LLM, agentes de IA, BI]
+exemplos_positivos: [Analista de Dados Júnior, Cientista de Dados Pleno, Engenheiro de Machine Learning, Analista
+    de BI]
+exemplos_negativos: [Enfermeiro Assistencial, Contador Pleno, Agente de Negócios]

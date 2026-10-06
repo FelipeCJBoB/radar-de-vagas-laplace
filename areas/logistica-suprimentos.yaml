@@ -1,0 +1,19 @@
+# Pack de área: Logística e Suprimentos
+# status: beta  (beta = semente gerada com IA, sem validação de quem trabalha na área)
+# Cada termo de `titulo` classifica a vaga pelo TÍTULO; 3 termos de `descricao` classificam pela descrição.
+# Os exemplos viram teste (tests/test_areas.py): positivos DEVEM classificar, negativos NÃO.
+nome: Logística e Suprimentos
+status: beta
+resumo: 'Logística, compras, estoque, almoxarifado e planejamento de demanda. Semente beta: gerada com IA e ainda
+  sem validação de quem trabalha na área.'
+titulo: [analista de logística, assistente de logística, auxiliar de logística, analista de compras, assistente
+    de compras, comprador, analista de suprimentos, analista de materiais, almoxarife, auxiliar de almoxarifado,
+  conferente, analista de estoque, analista de pcp, supply chain, planejamento de demanda, auxiliar de expedição,
+  supervisor de logística, coordenador de logística]
+descricao: [estoque, almoxarifado, recebimento de mercadorias, expedição, inventário, cotação de fornecedores, pedidos
+    de compra, wms, controle de materiais, roteirização]
+excluir_titulo: []
+habilidades_mercado: [sap, wms, excel, erp, inventário]
+termos_busca: [analista de logística, comprador, almoxarife, analista de materiais]
+exemplos_positivos: [Analista de Logística Pleno, Comprador, Almoxarife, Analista de Materiais]
+exemplos_negativos: [Enfermeiro, Professor de Matemática, Desenvolvedor Backend]

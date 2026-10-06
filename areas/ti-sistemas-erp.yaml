@@ -1,0 +1,18 @@
+# Pack de área: Sistemas e ERP
+# status: validado  (beta = semente gerada com IA, sem validação de quem trabalha na área)
+# Cada termo de `titulo` classifica a vaga pelo TÍTULO; 3 termos de `descricao` classificam pela descrição.
+# Os exemplos viram teste (tests/test_areas.py): positivos DEVEM classificar, negativos NÃO.
+nome: Sistemas e ERP
+status: validado
+resumo: Análise e implantação de sistemas, ERP (SAP, TOTVS, Sankhya) e análise de negócios.
+titulo: [sap, abap, erp, totvs, protheus, datasul, sankhya, analista de sistemas, analista de ti, analista de tecnologia,
+  implantador, implantadora, implantação de sistemas, consultor de sistemas, consultora de sistemas, analista funcional,
+  analista de negócios, business analyst, analista de processos, analista de integração]
+descricao: [sap, sap ecc, sap ewm, s/4hana, abap, erp, totvs, protheus, datasul, implantação de sistemas, parametrização,
+  analista funcional, levantamento de requisitos, mapeamento de processos, crm, salesforce]
+excluir_titulo: []
+habilidades_mercado: [sap, erp, sql, excel, levantamento de requisitos]
+termos_busca: [SAP, analista de sistemas, ERP, implantação de sistemas]
+exemplos_positivos: [Analista SAP SD, Analista de Sistemas Júnior, Implantador de Sistemas ERP, Analista Funcional
+    Protheus]
+exemplos_negativos: [Professor de Matemática, Cozinheiro, Auxiliar de Enfermagem]

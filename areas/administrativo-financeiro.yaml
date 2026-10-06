@@ -1,0 +1,20 @@
+# Pack de área: Administrativo e Financeiro
+# status: beta  (beta = semente gerada com IA, sem validação de quem trabalha na área)
+# Cada termo de `titulo` classifica a vaga pelo TÍTULO; 3 termos de `descricao` classificam pela descrição.
+# Os exemplos viram teste (tests/test_areas.py): positivos DEVEM classificar, negativos NÃO.
+nome: Administrativo e Financeiro
+status: beta
+resumo: 'Rotinas administrativas, financeiras, cobrança e faturamento. Semente beta: gerada com IA e ainda sem validação
+  de quem trabalha na área.'
+titulo: [assistente administrativo, auxiliar administrativo, analista administrativo, assistente financeiro, auxiliar
+    financeiro, analista financeiro, contas a pagar, contas a receber, tesouraria, analista de cobrança, auxiliar
+    de cobrança, assistente de faturamento, analista de faturamento, auxiliar de escritório, back office, backoffice,
+  secretária executiva, assistente de diretoria]
+descricao: [contas a pagar, contas a receber, fluxo de caixa, conciliação bancária, emissão de notas fiscais, faturamento,
+  cobrança, rotinas administrativas, controle de documentos, atendimento a fornecedores]
+excluir_titulo: []
+habilidades_mercado: [excel, pacote office, conciliação bancária, sap, protheus]
+termos_busca: [assistente administrativo, analista financeiro, contas a pagar, faturamento]
+exemplos_positivos: [Assistente Administrativo Júnior, Analista Financeiro Pleno, Auxiliar de Contas a Pagar, Analista
+    de Faturamento]
+exemplos_negativos: [Desenvolvedor Python, Enfermeiro Hospitalar, Soldador]

@@ -158,6 +158,10 @@ def explicar_titulo(titulo: str, cfg: dict, descricao: str = "") -> list[str]:
     if bloqueio:
         return linhas + [f"  EXCLUÍDA por excluir_titulo: {', '.join(bloqueio)}"]
     primaria, ordem, pontos = filters.classify(vaga, cfg.get("categorias") or {})
+    for chave, cat in (cfg.get("categorias") or {}).items():
+        so_nela = any_term(normalize(titulo), cat.get("excluir_titulo") or [])
+        if so_nela:
+            linhas.append(f"  {cat['nome']}: ignorada por excluir_titulo da categoria ({', '.join(so_nela)})")
     if not primaria:
         linhas.append("  SEM CATEGORIA: nenhum termo de título bateu (nem 3 de descrição). A vaga é descartada.")
     for chave in ordem:

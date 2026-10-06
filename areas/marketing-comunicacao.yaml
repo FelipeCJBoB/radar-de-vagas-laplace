@@ -1,0 +1,19 @@
+# Pack de área: Marketing e Comunicação
+# status: beta  (beta = semente gerada com IA, sem validação de quem trabalha na área)
+# Cada termo de `titulo` classifica a vaga pelo TÍTULO; 3 termos de `descricao` classificam pela descrição.
+# Os exemplos viram teste (tests/test_areas.py): positivos DEVEM classificar, negativos NÃO.
+nome: Marketing e Comunicação
+status: beta
+resumo: 'Marketing digital, conteúdo, design, mídias sociais e assessoria. Semente beta: gerada com IA e ainda sem
+  validação de quem trabalha na área.'
+titulo: [analista de marketing, assistente de marketing, social media, analista de mídias sociais, designer gráfico,
+  designer, redator, redatora, copywriter, analista de conteúdo, analista de comunicação, assessor de imprensa,
+  relações públicas, analista de seo, gestor de tráfego, analista de performance, marketing digital, produtor de
+    conteúdo, editor de vídeo, analista de branding]
+descricao: [redes sociais, campanhas, seo, google ads, meta ads, engajamento, plano de marketing, identidade visual,
+  gestão de conteúdo, copywriting]
+excluir_titulo: []
+habilidades_mercado: [canva, photoshop, google analytics, meta ads, seo]
+termos_busca: [marketing digital, social media, designer, redator]
+exemplos_positivos: [Analista de Marketing Digital, Social Media, Designer Gráfico, Gestor de Tráfego Pago]
+exemplos_negativos: [Almoxarife, Técnico de Enfermagem, Soldador]

@@ -1,0 +1,18 @@
+# Pack de área: Jurídico
+# status: beta  (beta = semente gerada com IA, sem validação de quem trabalha na área)
+# Cada termo de `titulo` classifica a vaga pelo TÍTULO; 3 termos de `descricao` classificam pela descrição.
+# Os exemplos viram teste (tests/test_areas.py): positivos DEVEM classificar, negativos NÃO.
+nome: Jurídico
+status: beta
+resumo: 'Advocacia, assessoria jurídica, contratos e compliance. Semente beta: gerada com IA e ainda sem validação
+  de quem trabalha na área.'
+titulo: [advogado, advogada, assistente jurídico, analista jurídico, auxiliar jurídico, paralegal, analista de contratos,
+  consultor jurídico, assessor jurídico, correspondente jurídico, coordenador jurídico, gerente jurídico, analista
+    de compliance]
+descricao: [peças processuais, audiências, contratos, oab, contencioso, pareceres jurídicos, prazos processuais,
+  due diligence, direito trabalhista, direito civil]
+excluir_titulo: []
+habilidades_mercado: [oab, contratos, contencioso, pje, compliance]
+termos_busca: [advogado, assistente jurídico, analista de contratos, compliance]
+exemplos_positivos: [Advogado Trabalhista, Assistente Jurídico, Analista de Contratos, Analista de Compliance Pleno]
+exemplos_negativos: [Pedreiro, Social Media, Auxiliar de Almoxarifado]
