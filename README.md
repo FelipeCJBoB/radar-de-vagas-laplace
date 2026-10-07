@@ -158,4 +158,6 @@ Veja o [CONTRIBUTING](CONTRIBUTING.md) e o [ROADMAP](ROADMAP.md). As contribuiç
 **consertar uma fonte que quebrou** e **validar os packs de uma área** que você conhece (todos fora
 de TI estão em fase `beta`).
 
+Quem mantém o modelo: [MANTENEDOR.md](MANTENEDOR.md).
+
 Licença: [MIT](LICENSE).

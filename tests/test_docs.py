@@ -8,7 +8,7 @@ from vagas_monitor.__main__ import main
 
 RAIZ = Path(__file__).resolve().parent.parent
 DOCS = [RAIZ / "README.md", RAIZ / "CLAUDE.md", RAIZ / "CONTRIBUTING.md", RAIZ / "SECURITY.md", RAIZ / "ROADMAP.md",
-        RAIZ / "CHANGELOG.md", *sorted((RAIZ / "guia").glob("*.md")), *sorted((RAIZ / ".claude" / "commands").glob("*.md"))]
+        RAIZ / "MANTENEDOR.md", RAIZ / "CHANGELOG.md", *sorted((RAIZ / "guia").glob("*.md")), *sorted((RAIZ / ".claude" / "commands").glob("*.md"))]
 
 
 def _links(texto):
