@@ -27,6 +27,20 @@ Só se você quer o painel online. Cuidado com o que ele revela:
 - **Metadados dos commits** mostram o nome e o e-mail do autor. Use o e-mail `noreply` do
   GitHub (Settings → Emails → *Keep my email addresses private*).
 
+### Ligar o painel público (GitHub Pages)
+
+Só faz sentido em repositório público, e depois de ler os cuidados acima.
+
+1. Em **Settings → Pages**, em *Build and deployment*, escolha **Deploy from a branch**, branch
+   `main` e a pasta **`/docs`**. O monitor regera o `docs/index.html` a cada rodada, e o `.nojekyll`
+   já está lá.
+2. O endereço sai no formato `https://SEU-USUARIO.github.io/NOME-DO-REPOSITORIO/`.
+3. Coloque-o em `config.yaml`, em `relatorio.url_publica`. É o link "Relatório completo" do Telegram
+   e do e-mail. Com ele preenchido, o painel **deixa de ir anexado** nas notificações (veja
+   `notificacoes.anexar_painel`).
+
+Para desligar, volte `url_publica` para `""` e desative o Pages.
+
 ## O que vai para as IAs
 
 - A avaliação por IA envia a cada chamada: o anúncio da vaga e o **seu perfil**.
