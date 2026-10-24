@@ -56,6 +56,17 @@ def test_indeed_via_jobspy_devolve_vagas():
 
 
 def test_ibge_continua_servindo_os_municipios():
-    r = requests.get("https://servicodados.ibge.gov.br/api/v1/localidades/municipios", timeout=60)
+    # O IBGE só serve ao tools/atualizar_ibge.py (o monitor usa o snapshot), e a API dele
+    # estoura o tempo a partir dos runners do GitHub. Sem resposta não é "contrato quebrado".
+    url = "https://servicodados.ibge.gov.br/api/v1/localidades/municipios"
+    r = None
+    for _ in range(3):
+        try:
+            r = requests.get(url, timeout=30)
+            break
+        except requests.exceptions.RequestException:
+            continue
+    if r is None:
+        pytest.skip("a API do IBGE não respondeu (rede), não dá para verificar o contrato")
     assert r.status_code == 200 and len(r.json()) > 5500, "a API de localidades do IBGE mudou"
     assert "regiao-imediata" in r.json()[0], "o snapshot (tools/atualizar_ibge.py) depende deste campo"
